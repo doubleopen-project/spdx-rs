@@ -8,6 +8,7 @@ pub mod checksum;
 pub mod creation_info;
 pub mod document_creation_information;
 pub mod doubleopen;
+pub mod error;
 pub mod external_document_reference;
 pub mod external_package_reference;
 pub mod file_information;
@@ -24,6 +25,7 @@ pub use annotation::*;
 pub use checksum::*;
 pub use creation_info::*;
 pub use document_creation_information::*;
+use error::SpdxError;
 pub use external_document_reference::*;
 pub use external_package_reference::*;
 pub use file_information::*;
@@ -113,17 +115,21 @@ impl SPDX {
     }
 
     /// Deserialize from file. Accepts json and yaml.
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Self {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, SpdxError> {
         info!("Deserializing SPDX from {}", path.as_ref().display());
 
         let path = path.as_ref();
-        let file = fs::File::open(&path).expect("SPDX file not found");
+        let file = fs::File::open(&path)?;
         let reader = BufReader::new(file);
 
-        match path.extension().unwrap().to_str() {
-            Some("yml") => serde_yaml::from_reader::<_, SPDX>(reader).unwrap(),
-            Some("json") => serde_json::from_reader::<_, SPDX>(reader).unwrap(),
-            None | Some(_) => panic!(),
+        match path
+            .extension()
+            .ok_or_else(|| SpdxError::PathExtension(path.to_string_lossy().to_string()))?
+            .to_str()
+        {
+            Some("yml") => Ok(serde_yaml::from_reader::<_, SPDX>(reader)?),
+            Some("json") => Ok(serde_json::from_reader::<_, SPDX>(reader)?),
+            None | Some(_) => Err(SpdxError::PathExtension(path.to_string_lossy().to_string())),
         }
     }
 
@@ -202,7 +208,6 @@ impl SPDX {
     }
 }
 
-
 /// Sanitize string to conform to SPDX license expression spec.
 fn sanitize_spdx_expression(lic: String) -> String {
     let lic = lic.replace(&['(', ')', '[', ']'][..], "");
@@ -219,7 +224,7 @@ mod test {
 
     #[test]
     fn deserialize_simple_spdx() {
-        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
         assert_eq!(
             spdx_file.document_creation_information.document_name,
             "SPDX-Tools-v2.0".to_string()
@@ -233,7 +238,7 @@ mod test {
             use super::*;
             #[test]
             fn spdx_version() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.document_creation_information.spdx_version,
                     "SPDX-2.2".to_string()
@@ -241,12 +246,12 @@ mod test {
             }
             #[test]
             fn data_license() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(spdx.document_creation_information.data_license, "CC0-1.0");
             }
             #[test]
             fn spdx_identifier() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.document_creation_information.spdx_identifier,
                     "SPDXRef-DOCUMENT".to_string()
@@ -254,7 +259,7 @@ mod test {
             }
             #[test]
             fn document_name() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.document_creation_information.document_name,
                     "SPDX-Tools-v2.0".to_string()
@@ -262,7 +267,7 @@ mod test {
             }
             #[test]
             fn spdx_document_namespace() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.document_creation_information.spdx_document_namespace,
                     "http://spdx.org/spdxdocs/spdx-example-444504E0-4F89-41D3-9A0C-0305E82C3301"
@@ -271,7 +276,7 @@ mod test {
             }
             #[test]
             fn external_document_references() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert!(spdx
             .document_creation_information
             .external_document_references
@@ -288,7 +293,7 @@ mod test {
             }
             #[test]
             fn license_list_version() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.document_creation_information
                         .creation_info
@@ -298,7 +303,7 @@ mod test {
             }
             #[test]
             fn creators() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert!(spdx
                     .document_creation_information
                     .creation_info
@@ -317,7 +322,7 @@ mod test {
             }
             #[test]
             fn created() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.document_creation_information.creation_info.created,
                     Utc.ymd(2010, 1, 29).and_hms(18, 30, 22)
@@ -325,7 +330,7 @@ mod test {
             }
             #[test]
             fn creator_comment() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.document_creation_information
                         .creation_info
@@ -340,7 +345,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn document_comment() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                 spdx.document_creation_information.document_comment,
                 Some(
@@ -356,12 +361,12 @@ compatible system run time libraries."#
 
             #[test]
             fn all_packages_are_deserialized() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(spdx.package_information.len(), 4);
             }
             #[test]
             fn package_name() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_name,
                     "glibc".to_string()
@@ -369,7 +374,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_spdx_identifier() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_spdx_identifier,
                     "SPDXRef-Package".to_string()
@@ -377,7 +382,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_version() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_version,
                     Some("2.11.1".to_string())
@@ -385,7 +390,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_file_name() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_file_name,
                     Some("glibc-2.11.1.tar.gz".to_string())
@@ -393,7 +398,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_supplier() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_supplier,
                     Some("Person: Jane Doe (jane.doe@example.com)".to_string())
@@ -401,7 +406,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_originator() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_originator,
                     Some("Organization: ExampleCodeInspect (contact@example.com)".to_string())
@@ -409,7 +414,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_download_location() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_download_location,
                     "http://ftp.gnu.org/gnu/glibc/glibc-ports-2.15.tar.gz".to_string()
@@ -417,12 +422,12 @@ compatible system run time libraries."#
             }
             #[test]
             fn files_analyzed() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(spdx.package_information[0].files_analyzed, Some(true));
             }
             #[test]
             fn package_verification_code() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_verification_code,
                     Some(PackageVerificationCode {
@@ -433,7 +438,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_chekcsum() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert!(spdx.package_information[0]
                     .package_checksum
                     .contains(&Checksum::new(
@@ -455,7 +460,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_home_page() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_home_page,
                     Some("http://ftp.gnu.org/gnu/glibc".to_string())
@@ -463,7 +468,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn source_information() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].source_information,
                     Some(
@@ -474,7 +479,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn concluded_license() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].concluded_license,
                     SPDXExpression("(LGPL-2.0-only OR LicenseRef-3)".to_string())
@@ -482,7 +487,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn all_licenses_information_from_files() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert!(spdx.package_information[0]
                     .all_licenses_information_from_files
                     .contains(&"GPL-2.0-only".to_string()));
@@ -495,7 +500,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn declared_license() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].declared_license,
                     SPDXExpression("(LGPL-2.0-only AND LicenseRef-3)".to_string())
@@ -503,7 +508,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn comments_on_license() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].comments_on_license,
                     Some("The license for this project changed with the release of version x.y.  The version of the project included here post-dates the license change.".to_string())
@@ -511,7 +516,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn copyright_text() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].copyright_text,
                     "Copyright 2008-2010 John Smith".to_string()
@@ -519,7 +524,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_summary_description() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_summary_description,
                     Some("GNU C library.".to_string())
@@ -527,7 +532,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_detailed_description() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[0].package_detailed_description,
                     Some("The GNU C Library defines functions that are specified by the ISO C standard, as well as additional features specific to POSIX and other derivatives of the Unix operating system, and extensions specific to GNU systems.".to_string())
@@ -535,7 +540,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_comment() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.package_information[1].package_comment,
                     Some(
@@ -546,7 +551,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn external_reference() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert!(
                     spdx.package_information[0].external_reference.contains(&ExternalPackageReference {
                         reference_comment: Some("This is the external ref for Acme".to_string()),
@@ -568,7 +573,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn package_attribution_text() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert!(
                     spdx.package_information[0].package_attribution_text.contains(&"The GNU C Library is free software.  See the file COPYING.LIB for copying conditions, and LICENSES for notices about a few contributions that require these additional notices to be distributed.  License copyright years may be listed using range notation, e.g., 1996-2015, indicating that every year in the range, inclusive, is a copyrightable year that would otherwise be listed individually.".to_string())
                 );
@@ -580,7 +585,7 @@ compatible system run time libraries."#
 
             #[test]
             fn file_name() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[0].file_name,
                     "./src/org/spdx/parser/DOAPProject.java"
@@ -588,7 +593,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn file_spdx_identifier() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[0].file_spdx_identifier,
                     "SPDXRef-DoapSource"
@@ -596,12 +601,12 @@ compatible system run time libraries."#
             }
             #[test]
             fn file_type() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(spdx.file_information[0].file_type, vec![FileType::Source]);
             }
             #[test]
             fn file_checksum() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[0].file_checksum,
                     vec![Checksum {
@@ -612,7 +617,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn concluded_license() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[0].concluded_license,
                     SPDXExpression("Apache-2.0".to_string())
@@ -620,7 +625,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn license_information_in_file() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[0].license_information_in_file,
                     vec!["Apache-2.0".to_string()]
@@ -628,7 +633,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn comments_on_license() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[2].comments_on_license,
                     Some("This license is used by Jena".to_string())
@@ -636,7 +641,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn copyright_text() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[0].copyright_text,
                     "Copyright 2010, 2011 Source Auditor Inc.".to_string()
@@ -644,7 +649,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn file_comment() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[1].file_comment,
                     Some("This file is used by Jena".to_string())
@@ -652,7 +657,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn file_notice() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[1].file_notice,
                     Some("Apache Commons Lang\nCopyright 2001-2011 The Apache Software Foundation\n\nThis product includes software developed by\nThe Apache Software Foundation (http://www.apache.org/).\n\nThis product includes software from the Spring Framework,\nunder the Apache License 2.0 (see: StringUtils.containsWhitespace())".to_string())
@@ -660,7 +665,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn file_contributor() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.file_information[1].file_contributor,
                     vec!["Apache Software Foundation".to_string()]
@@ -673,7 +678,7 @@ compatible system run time libraries."#
 
             #[test]
             fn snippet_spdx_identifier() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].snippet_spdx_identifier,
                     "SPDXRef-Snippet".to_string()
@@ -681,7 +686,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn snippet_from_file_spdx_identifier() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].snippet_from_file_spdx_identifier,
                     "SPDXRef-DoapSource".to_string()
@@ -689,7 +694,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn ranges() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].ranges,
                     vec![
@@ -722,7 +727,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn snippet_concluded_license() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].snippet_concluded_license,
                     SPDXExpression("GPL-2.0-only".to_string())
@@ -730,7 +735,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn license_information_in_snippet() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].license_information_in_snippet,
                     vec!["GPL-2.0-only".to_string()]
@@ -738,7 +743,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn snippet_comments_on_license() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].snippet_comments_on_license,
                     Some("The concluded license was taken from package xyz, from which the snippet was copied into the current file. The concluded license information was found in the COPYING.txt file in package xyz.".to_string())
@@ -746,7 +751,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn snippet_copyright_text() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].snippet_copyright_text,
                     "Copyright 2008-2010 John Smith".to_string()
@@ -754,7 +759,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn snippet_comment() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].snippet_comment,
                     Some("This snippet was identified as significant and highlighted in this Apache-2.0 file, when a commercial scanner identified it as being derived from file foo.c in package xyz which is licensed under GPL-2.0.".to_string())
@@ -762,7 +767,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn snippet_name() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.snippet_information[0].snippet_name,
                     Some("from linux kernel".to_string())
@@ -775,7 +780,7 @@ compatible system run time libraries."#
 
             #[test]
             fn license_identifier() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.other_licensing_information_detected[0].license_identifier,
                     "LicenseRef-Beerware-4.2".to_string()
@@ -783,12 +788,12 @@ compatible system run time libraries."#
             }
             #[test]
             fn extracted_text() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(spdx.other_licensing_information_detected[0].extracted_text, "\"THE BEER-WARE LICENSE\" (Revision 42):\nphk@FreeBSD.ORG wrote this file. As long as you retain this notice you\ncan do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp  </\nLicenseName: Beer-Ware License (Version 42)\nLicenseCrossReference:  http://people.freebsd.org/~phk/\nLicenseComment: \nThe beerware license has a couple of other standard variants.")
             }
             #[test]
             fn license_name() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.other_licensing_information_detected[2].license_name,
                     "CyberNeko License".to_string()
@@ -796,7 +801,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn license_cross_reference() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.other_licensing_information_detected[2].license_cross_reference,
                     vec![
@@ -807,7 +812,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn license_comment() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.other_licensing_information_detected[2].license_comment,
                     Some("This is tye CyperNeko License".to_string())
@@ -820,7 +825,7 @@ compatible system run time libraries."#
 
             #[test]
             fn spdx_element_id() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.relationships[0].spdx_element_id,
                     "SPDXRef-DOCUMENT".to_string()
@@ -828,7 +833,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn related_spdx_element() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.relationships[0].related_spdx_element,
                     "SPDXRef-Package".to_string()
@@ -836,7 +841,7 @@ compatible system run time libraries."#
             }
             #[test]
             fn relationship_type() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.relationships[0].relationship_type,
                     RelationshipType::Contains
@@ -853,7 +858,7 @@ compatible system run time libraries."#
 
             #[test]
             fn annotator() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.annotations[0].annotator,
                     "Person: Jane Doe ()".to_string()
@@ -862,7 +867,7 @@ compatible system run time libraries."#
 
             #[test]
             fn annotation_date() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.annotations[0].annotation_date,
                     Utc.ymd(2010, 1, 29).and_hms(18, 30, 22)
@@ -871,13 +876,13 @@ compatible system run time libraries."#
 
             #[test]
             fn annotation_type() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(spdx.annotations[0].annotation_type, AnnotationType::Other);
             }
 
             #[test]
             fn annotation_comment() {
-                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+                let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
                 assert_eq!(
                     spdx.annotations[0].annotation_comment,
                     "Document level annotation"
@@ -888,7 +893,7 @@ compatible system run time libraries."#
 
     #[test]
     fn find_related_files_for_package() {
-        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
 
         let package_1_files = spdx_file.get_files_for_package("SPDXRef-Package");
 
@@ -912,7 +917,7 @@ compatible system run time libraries."#
 
     #[test]
     fn get_all_licenses_from_spdx() {
-        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json");
+        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
 
         let mut actual = spdx_file.get_license_ids();
         actual.sort();
