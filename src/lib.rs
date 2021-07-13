@@ -156,11 +156,13 @@ impl SPDX {
     }
 
     /// Save serialized SPDX as json,
-    pub fn save_as_json<P: AsRef<Path>>(&self, path: P) {
+    pub fn save_as_json<P: AsRef<Path>>(&self, path: P) -> Result<(), SpdxError> {
         println!("Saving to json...");
 
-        let json = serde_json::to_string_pretty(&self).unwrap();
-        fs::write(path, json).expect("Unable to write file");
+        let json = serde_json::to_string_pretty(&self)?;
+        fs::write(path, json)?;
+
+        Ok(())
     }
 
     /// Find related files of the package with the provided id.
