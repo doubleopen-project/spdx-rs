@@ -4,6 +4,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::error::SpdxError;
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LicenseList {
@@ -16,26 +18,18 @@ pub struct LicenseList {
 }
 
 impl LicenseList {
-    pub fn from_github() -> Self {
+    pub fn from_github() -> Result<Self, SpdxError> {
         let licenses_url =
             "https://raw.githubusercontent.com/spdx/license-list-data/master/json/licenses.json";
-        let body = reqwest::blocking::get(licenses_url)
-            .unwrap()
-            .text()
-            .unwrap();
-        let mut license_list: LicenseList =
-            serde_json::from_str(&body).expect("Deseralization should work.");
+        let body = reqwest::blocking::get(licenses_url)?.text()?;
+        let mut license_list: LicenseList = serde_json::from_str(&body)?;
 
         let exceptions_url =
             "https://raw.githubusercontent.com/spdx/license-list-data/master/json/exceptions.json";
-        let body = reqwest::blocking::get(exceptions_url)
-            .unwrap()
-            .text()
-            .unwrap();
-        let exceptions_list: LicenseList =
-            serde_json::from_str(&body).expect("Deserialization should work.");
+        let body = reqwest::blocking::get(exceptions_url)?.text()?;
+        let exceptions_list: LicenseList = serde_json::from_str(&body)?;
         license_list.exceptions = exceptions_list.exceptions;
-        license_list
+        Ok(license_list)
     }
 
     pub fn includes_license(&self, spdx_id: &str) -> bool {
@@ -102,7 +96,7 @@ mod test_license_list {
 
     #[test]
     fn from_github_works() {
-        let license_list = LicenseList::from_github();
+        let license_list = LicenseList::from_github().unwrap();
 
         assert!(!license_list.licenses.is_empty());
         assert!(!license_list.exceptions.is_empty());
@@ -110,7 +104,7 @@ mod test_license_list {
 
     #[test]
     fn bsd_works() {
-        let license_list = LicenseList::from_github();
+        let license_list = LicenseList::from_github().unwrap();
 
         assert!(!license_list.includes_license("BSD"));
         assert!(!license_list.includes_exception("BSD"));

@@ -15,6 +15,12 @@ pub enum SpdxError {
         source: serde_json::Error,
     },
 
+    #[error("Error with HTML request.")]
+    Request {
+        #[from]
+        source: reqwest::Error,
+    },
+
     #[error("Path {0} doesn't have an extension.")]
     PathExtension(String),
 
