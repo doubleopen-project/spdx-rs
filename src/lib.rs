@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2020 HH Partners
+// SPDX-FileCopyrightText: 2020 H spdx_element_id: (), related_spdx_element: (), relationship_type: (), comment: ()  spdx_element_id: (), related_spdx_element: (), relationship_type: (), comment: () H Partners
 //
 // SPDX-License-Identifier: MIT
 
@@ -207,6 +207,22 @@ impl SPDX {
         }
 
         license_ids
+    }
+
+    /// Get all relationships where the given SPDX ID is the SPDX element id.
+    pub fn relationships_for_spdx_id(&self, spdx_id: &str) -> Vec<&Relationship> {
+        self.relationships
+            .iter()
+            .filter(|relationship| relationship.spdx_element_id == spdx_id)
+            .collect()
+    }
+
+    /// Get all relationships where the given SPDX ID is the related SPDX element id.
+    pub fn relationships_for_related_spdx_id(&self, spdx_id: &str) -> Vec<&Relationship> {
+        self.relationships
+            .iter()
+            .filter(|relationship| relationship.related_spdx_element == spdx_id)
+            .collect()
     }
 }
 
@@ -933,5 +949,55 @@ compatible system run time libraries."#
         expected.sort();
 
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn get_relationships_for_spdx_id() {
+        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+
+        let relationships = spdx_file.relationships_for_spdx_id("SPDXRef-Package");
+        let relationship_1 = Relationship {
+            spdx_element_id: "SPDXRef-Package".into(),
+            related_spdx_element: "SPDXRef-Saxon".into(),
+            relationship_type: RelationshipType::DynamicLink,
+            comment: None,
+        };
+        let relationship_2 = Relationship {
+            spdx_element_id: "SPDXRef-Package".into(),
+            related_spdx_element: "SPDXRef-JenaLib".into(),
+            relationship_type: RelationshipType::Contains,
+            comment: None,
+        };
+        let expected_relationships = vec![&relationship_1, &relationship_2];
+
+        assert_eq!(relationships, expected_relationships)
+    }
+
+    #[test]
+    fn get_relationships_for_related_spdx_id() {
+        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+
+        let relationships = spdx_file.relationships_for_related_spdx_id("SPDXRef-Package");
+        let relationship_1 = Relationship {
+            spdx_element_id: "SPDXRef-DOCUMENT".into(),
+            related_spdx_element: "SPDXRef-Package".into(),
+            relationship_type: RelationshipType::Contains,
+            comment: None,
+        };
+        let relationship_2 = Relationship {
+            spdx_element_id: "SPDXRef-DOCUMENT".into(),
+            related_spdx_element: "SPDXRef-Package".into(),
+            relationship_type: RelationshipType::Describes,
+            comment: None,
+        };
+        let relationship_3 = Relationship {
+            spdx_element_id: "SPDXRef-JenaLib".into(),
+            related_spdx_element: "SPDXRef-Package".into(),
+            relationship_type: RelationshipType::Contains,
+            comment: None,
+        };
+        let expected_relationships = vec![&relationship_1, &relationship_2, &relationship_3];
+
+        assert_eq!(relationships, expected_relationships)
     }
 }

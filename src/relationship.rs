@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 
 /// https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/#71-relationship
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Relationship {
     /// SPDX ID of the element.
