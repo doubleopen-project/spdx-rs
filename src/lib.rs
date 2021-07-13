@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2020 H spdx_element_id: (), related_spdx_element: (), relationship_type: (), comment: ()  spdx_element_id: (), related_spdx_element: (), relationship_type: (), comment: () H Partners
+// SPDX-FileCopyrightText: 2020 HH Partners
 //
 // SPDX-License-Identifier: MIT
 
