@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 [package]
-name = "spdx"
+name = "spdx-rs"
 version = "0.1.0"
 authors = ["Mikko Murto <mikko.murto@hhpartners.fi>"]
 edition = "2018"
