@@ -7,6 +7,15 @@ name = "spdx-rs"
 version = "0.1.0"
 authors = ["Mikko Murto <mikko.murto@hhpartners.fi>"]
 edition = "2018"
+license = "MIT"
+description = "Parse and interact with SPDX Documents"
+homepage = "https://github.com/doubleopen-project/spdx-rs"
+repository = "https://github.com/doubleopen-project/spdx-rs"
+exclude = [
+  "/tests/",
+  "/.github/",
+  "/.gitignore"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
