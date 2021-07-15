@@ -113,7 +113,7 @@ pub fn fossology_conclusions_to_spdx_expression(
     // Convert all conclusions to be SPDX compliant.
     let conclusions: Vec<String> = conclusions
         .into_iter()
-        .map(|lic| gpl_or_later_conversion(lic))
+        .map(gpl_or_later_conversion)
         .map(|lic| {
             if license_list.includes_license(&lic)
                 || license_list.includes_exception(&lic)

@@ -125,10 +125,7 @@ impl FileInformation {
             .iter()
             .find(|&checksum| checksum.algorithm == algorithm);
 
-        match checksum {
-            Some(checksum) => Some(&checksum.value),
-            None => None,
-        }
+        checksum.map(|checksum| checksum.value.as_str())
     }
 }
 
