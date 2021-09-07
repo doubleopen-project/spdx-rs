@@ -31,12 +31,12 @@ pub use external_document_reference::*;
 pub use external_package_reference::*;
 pub use file_information::*;
 pub use file_type::*;
-use graph::create_graph;
+use graph::{create_graph, find_path, path_with_relationships};
 use log::info;
 pub use other_licensing_information_detected::*;
 pub use package_information::*;
 pub use package_verification_code::*;
-use petgraph::Graph;
+use petgraph::graphmap::DiGraphMap;
 pub use relationship::*;
 use serde::{Deserialize, Serialize};
 pub use snippet::*;
@@ -229,8 +229,24 @@ impl SPDX {
     }
 
     /// Create a graph of the relationships in the SPDX Document.
-    pub fn graph(&self) -> Graph<&str, &RelationshipType> {
+    pub fn graph(&self) -> DiGraphMap<&str, &RelationshipType> {
         create_graph(self)
+    }
+
+    /// Find a path between two SPDX IDs.
+    pub fn find_path_between_spdx_ids(&self, from: &str, to: &str) -> Option<Vec<String>> {
+        let graph = self.graph();
+        let path = find_path(&graph, from, to);
+        if let Some(path) = path {
+            Some(
+                path_with_relationships(&graph, path.1)
+                    .iter()
+                    .map(|part| part.to_string())
+                    .collect(),
+            )
+        } else {
+            None
+        }
     }
 }
 
@@ -1000,5 +1016,14 @@ compatible system run time libraries."#
         let expected_relationships = vec![&relationship_1, &relationship_2, &relationship_3];
 
         assert_eq!(relationships, expected_relationships)
+    }
+
+    #[test]
+    fn find_path_between_ids_works() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let path = spdx
+            .find_path_between_spdx_ids("SPDXRef-DOCUMENT", "SPDXRef-Saxon")
+            .unwrap();
+        dbg!(path);
     }
 }
