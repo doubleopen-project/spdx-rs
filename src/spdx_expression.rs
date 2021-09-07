@@ -6,7 +6,7 @@ use boolean_expression::Expr;
 use serde::{Deserialize, Serialize};
 
 /// https://spdx.github.io/spdx-spec/appendix-IV-SPDX-license-expressions/
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct SPDXExpression(pub String);
 
 impl SPDXExpression {

@@ -1,0 +1,65 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.2",
+  "creationInfo": {
+    "comment": "A package for graph generation",
+    "created": "2010-01-29T18:30:22Z",
+    "creators": [
+      "Tool: DoubleOpen",
+      "Organization: DoubleOpen ()",
+      "Person: Double Open ()"
+    ],
+    "licenseListVersion": "3.9"
+  },
+  "name": "SPDX-Graph",
+  "dataLicense": "CC0-1.0",
+  "comment": "This document was created using SPDX 2.0 using licenses from the web site.",
+  "externalDocumentRefs": [
+    {
+      "externalDocumentId": "DocumentRef-graph",
+      "checksum": {
+        "algorithm": "SHA1",
+        "checksumValue": "d6a770ba38583ed4bb4525bd96e50461655d2759"
+      },
+      "spdxDocument": "http://spdx.org/spdxdocs/spdx-graph"
+    }
+  ],
+  "hasExtractedLicensingInfos": [],
+  "annotations": [],
+  "documentNamespace": "http://spdx.org/spdxdocs/spdx-graph",
+  "documentDescribes": [
+    "SPDXRef-Package-1"
+  ],
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-1",
+      "copyrightText": "Copyright 2008-2010 John Smith",
+      "downloadLocation": "NOASSERTION",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "Package-1"
+    }
+  ],
+  "files": [
+    {
+      "SPDXID": "SPDXRef-File-1",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"
+        }
+      ],
+      "copyrightText": "Copyright 2010, 2011 Mej",
+      "fileName": "./file-1",
+      "licenseConcluded": "NOASSERTION",
+      "licenseInfoInFiles": []
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Package-1",
+      "relatedSpdxElement": "SPDXRef-File-1",
+      "relationshipType": "CONTAINS"
+    }
+  ]
+}

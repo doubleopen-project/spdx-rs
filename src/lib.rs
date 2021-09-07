@@ -13,6 +13,7 @@ pub mod external_document_reference;
 pub mod external_package_reference;
 pub mod file_information;
 pub mod file_type;
+pub mod graph;
 pub mod license_list;
 pub mod other_licensing_information_detected;
 pub mod package_information;
@@ -30,10 +31,12 @@ pub use external_document_reference::*;
 pub use external_package_reference::*;
 pub use file_information::*;
 pub use file_type::*;
+use graph::create_graph;
 use log::info;
 pub use other_licensing_information_detected::*;
 pub use package_information::*;
 pub use package_verification_code::*;
+use petgraph::Graph;
 pub use relationship::*;
 use serde::{Deserialize, Serialize};
 pub use snippet::*;
@@ -223,6 +226,11 @@ impl SPDX {
             .iter()
             .filter(|relationship| relationship.related_spdx_element == spdx_id)
             .collect()
+    }
+
+    /// Create a graph of the relationships in the SPDX Document.
+    pub fn graph(&self) -> Graph<&str, &RelationshipType> {
+        create_graph(self)
     }
 }
 

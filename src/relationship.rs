@@ -41,7 +41,7 @@ impl Relationship {
 }
 
 /// https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/#71-relationship
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum RelationshipType {
     Describes,

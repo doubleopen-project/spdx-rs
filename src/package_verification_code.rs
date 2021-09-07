@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 
 /// https://spdx.github.io/spdx-spec/3-package-information/#39-package-verification-code
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct PackageVerificationCode {
     /// Value of the verification code.
     #[serde(rename = "packageVerificationCodeValue")]

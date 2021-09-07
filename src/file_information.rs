@@ -11,7 +11,7 @@ use super::{Checksum, FileType, SPDXExpression};
 /// ## File Information
 ///
 /// SPDX's [File Information](https://spdx.github.io/spdx-spec/4-file-information/)
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FileInformation {
     /// https://spdx.github.io/spdx-spec/4-file-information/#41-file-name
