@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 
-use petgraph::{algo::astar, graphmap::DiGraphMap, EdgeDirection};
+use petgraph::{
+    algo::astar,
+    dot::Dot,
+    graphmap::{DiGraphMap, GraphMap},
+    Directed, EdgeDirection,
+};
 
 use crate::{RelationshipType, SPDX};
 
@@ -47,6 +52,13 @@ pub(crate) fn path_with_relationships<'a>(
         path_with_relationships.push(spdx_id);
     }
     path_with_relationships
+}
+
+/// Create graphviz dot.
+pub fn graphviz<'a>(
+    graph: &'a DiGraphMap<&'a str, &'a RelationshipType>,
+) -> Dot<&GraphMap<&str, &RelationshipType, Directed>> {
+    Dot::new(graph)
 }
 
 #[cfg(test)]
