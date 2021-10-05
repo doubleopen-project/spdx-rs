@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::{Algorithm, Checksum, FileType, SPDXExpression};
+use super::{Algorithm, Checksum, SPDXExpression};
 
 /// ## File Information
 ///
@@ -125,9 +125,27 @@ impl FileInformation {
     }
 }
 
+/// <https://spdx.github.io/spdx-spec/4-file-information/#43-file-type>
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum FileType {
+    Source,
+    Binary,
+    Archive,
+    Application,
+    Audio,
+    Image,
+    Text,
+    Video,
+    Documentation,
+    SPDX,
+    Other,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::models::{Checksum, FileType, SPDXExpression, SPDX};
 
     #[test]
     fn checksum_equality() {
@@ -166,5 +184,94 @@ mod test {
             .push(Checksum::new(Algorithm::MD5, "test"));
 
         assert_eq!(file_md5.checksum(Algorithm::MD5), Some("test"));
+    }
+
+    #[test]
+    fn file_name() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[0].file_name,
+            "./src/org/spdx/parser/DOAPProject.java"
+        );
+    }
+    #[test]
+    fn file_spdx_identifier() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[0].file_spdx_identifier,
+            "SPDXRef-DoapSource"
+        );
+    }
+    #[test]
+    fn file_type() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(spdx.file_information[0].file_type, vec![FileType::Source]);
+    }
+    #[test]
+    fn file_checksum() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[0].file_checksum,
+            vec![Checksum {
+                algorithm: Algorithm::SHA1,
+                value: "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12".to_string()
+            }]
+        );
+    }
+    #[test]
+    fn concluded_license() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[0].concluded_license,
+            SPDXExpression("Apache-2.0".to_string())
+        );
+    }
+    #[test]
+    fn license_information_in_file() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[0].license_information_in_file,
+            vec!["Apache-2.0".to_string()]
+        );
+    }
+    #[test]
+    fn comments_on_license() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[2].comments_on_license,
+            Some("This license is used by Jena".to_string())
+        );
+    }
+    #[test]
+    fn copyright_text() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[0].copyright_text,
+            "Copyright 2010, 2011 Source Auditor Inc.".to_string()
+        );
+    }
+    #[test]
+    fn file_comment() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[1].file_comment,
+            Some("This file is used by Jena".to_string())
+        );
+    }
+    #[test]
+    fn file_notice() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+                    spdx.file_information[1].file_notice,
+                    Some("Apache Commons Lang\nCopyright 2001-2011 The Apache Software Foundation\n\nThis product includes software developed by\nThe Apache Software Foundation (http://www.apache.org/).\n\nThis product includes software from the Spring Framework,\nunder the Apache License 2.0 (see: StringUtils.containsWhitespace())".to_string())
+                );
+    }
+    #[test]
+    fn file_contributor() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.file_information[1].file_contributor,
+            vec!["Apache Software Foundation".to_string()]
+        );
     }
 }

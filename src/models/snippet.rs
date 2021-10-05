@@ -86,3 +86,108 @@ pub struct EndPointer {
     pub offset: Option<i32>,
     pub line_number: Option<i32>,
 }
+
+#[cfg(test)]
+mod test {
+    use crate::models::SPDX;
+
+    use super::*;
+
+    #[test]
+    fn snippet_spdx_identifier() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.snippet_information[0].snippet_spdx_identifier,
+            "SPDXRef-Snippet".to_string()
+        );
+    }
+    #[test]
+    fn snippet_from_file_spdx_identifier() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.snippet_information[0].snippet_from_file_spdx_identifier,
+            "SPDXRef-DoapSource".to_string()
+        );
+    }
+    #[test]
+    fn ranges() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.snippet_information[0].ranges,
+            vec![
+                Range {
+                    end_pointer: EndPointer {
+                        line_number: Some(23),
+                        reference: Some("SPDXRef-DoapSource".to_string()),
+                        offset: None
+                    },
+                    start_pointer: StartPointer {
+                        line_number: Some(5),
+                        reference: Some("SPDXRef-DoapSource".to_string()),
+                        offset: None
+                    }
+                },
+                Range {
+                    end_pointer: EndPointer {
+                        line_number: None,
+                        reference: Some("SPDXRef-DoapSource".to_string()),
+                        offset: Some(420)
+                    },
+                    start_pointer: StartPointer {
+                        line_number: None,
+                        reference: Some("SPDXRef-DoapSource".to_string()),
+                        offset: Some(310)
+                    }
+                },
+            ]
+        );
+    }
+    #[test]
+    fn snippet_concluded_license() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.snippet_information[0].snippet_concluded_license,
+            SPDXExpression("GPL-2.0-only".to_string())
+        );
+    }
+    #[test]
+    fn license_information_in_snippet() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.snippet_information[0].license_information_in_snippet,
+            vec!["GPL-2.0-only".to_string()]
+        );
+    }
+    #[test]
+    fn snippet_comments_on_license() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+                    spdx.snippet_information[0].snippet_comments_on_license,
+                    Some("The concluded license was taken from package xyz, from which the snippet was copied into the current file. The concluded license information was found in the COPYING.txt file in package xyz.".to_string())
+                );
+    }
+    #[test]
+    fn snippet_copyright_text() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.snippet_information[0].snippet_copyright_text,
+            "Copyright 2008-2010 John Smith".to_string()
+        );
+    }
+    #[test]
+    fn snippet_comment() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+                    spdx.snippet_information[0].snippet_comment,
+                    Some("This snippet was identified as significant and highlighted in this Apache-2.0 file, when a commercial scanner identified it as being derived from file foo.c in package xyz which is licensed under GPL-2.0.".to_string())
+                );
+    }
+    #[test]
+    fn snippet_name() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.snippet_information[0].snippet_name,
+            Some("from linux kernel".to_string())
+        );
+    }
+}

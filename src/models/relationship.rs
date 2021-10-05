@@ -88,3 +88,39 @@ pub enum RelationshipType {
     HasPrerequisite,
     Other,
 }
+
+#[cfg(test)]
+mod test {
+    use crate::models::SPDX;
+
+    use super::*;
+
+    #[test]
+    fn spdx_element_id() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.relationships[0].spdx_element_id,
+            "SPDXRef-DOCUMENT".to_string()
+        );
+    }
+    #[test]
+    fn related_spdx_element() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.relationships[0].related_spdx_element,
+            "SPDXRef-Package".to_string()
+        );
+    }
+    #[test]
+    fn relationship_type() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.relationships[0].relationship_type,
+            RelationshipType::Contains
+        );
+        assert_eq!(
+            spdx.relationships[2].relationship_type,
+            RelationshipType::CopyOf
+        );
+    }
+}

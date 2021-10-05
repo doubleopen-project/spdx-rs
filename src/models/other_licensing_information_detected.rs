@@ -32,3 +32,49 @@ pub struct OtherLicensingInformationDetected {
 fn default_noassertion() -> String {
     "NOASSERTION".into()
 }
+
+#[cfg(test)]
+mod test {
+    use crate::models::SPDX;
+
+    #[test]
+    fn license_identifier() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.other_licensing_information_detected[0].license_identifier,
+            "LicenseRef-Beerware-4.2".to_string()
+        );
+    }
+    #[test]
+    fn extracted_text() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(spdx.other_licensing_information_detected[0].extracted_text, "\"THE BEER-WARE LICENSE\" (Revision 42):\nphk@FreeBSD.ORG wrote this file. As long as you retain this notice you\ncan do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp  </\nLicenseName: Beer-Ware License (Version 42)\nLicenseCrossReference:  http://people.freebsd.org/~phk/\nLicenseComment: \nThe beerware license has a couple of other standard variants.");
+    }
+    #[test]
+    fn license_name() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.other_licensing_information_detected[2].license_name,
+            "CyberNeko License".to_string()
+        );
+    }
+    #[test]
+    fn license_cross_reference() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.other_licensing_information_detected[2].license_cross_reference,
+            vec![
+                "http://people.apache.org/~andyc/neko/LICENSE".to_string(),
+                "http://justasample.url.com".to_string()
+            ]
+        );
+    }
+    #[test]
+    fn license_comment() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        assert_eq!(
+            spdx.other_licensing_information_detected[2].license_comment,
+            Some("This is tye CyperNeko License".to_string())
+        );
+    }
+}
