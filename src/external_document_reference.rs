@@ -5,7 +5,7 @@
 use super::Checksum;
 use serde::{Deserialize, Serialize};
 
-/// https://spdx.github.io/spdx-spec/2-document-creation-information/#26-external-document-references
+/// <https://spdx.github.io/spdx-spec/2-document-creation-information/#26-external-document-references>
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ExternalDocumentReference {
     /// Unique ID string of the reference.

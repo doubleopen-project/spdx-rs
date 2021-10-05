@@ -18,16 +18,20 @@ pub struct LicenseList {
 }
 
 impl LicenseList {
+    /// # Errors
+    /// 
+    /// Returns [`SpdxError`] if there is a problem with retrieving the license list from GitHub
+    /// or if deserializing the data fails.
     pub fn from_github() -> Result<Self, SpdxError> {
         let licenses_url =
             "https://raw.githubusercontent.com/spdx/license-list-data/master/json/licenses.json";
         let body = reqwest::blocking::get(licenses_url)?.text()?;
-        let mut license_list: LicenseList = serde_json::from_str(&body)?;
+        let mut license_list: Self = serde_json::from_str(&body)?;
 
         let exceptions_url =
             "https://raw.githubusercontent.com/spdx/license-list-data/master/json/exceptions.json";
         let body = reqwest::blocking::get(exceptions_url)?.text()?;
-        let exceptions_list: LicenseList = serde_json::from_str(&body)?;
+        let exceptions_list: Self = serde_json::from_str(&body)?;
         license_list.exceptions = exceptions_list.exceptions;
         Ok(license_list)
     }

@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 use strum_macros::AsRefStr;
 
-/// https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/#71-relationship
+/// <https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/#71-relationship>
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Relationship {
@@ -41,7 +41,7 @@ impl Relationship {
     }
 }
 
-/// https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/#71-relationship
+/// <https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/#71-relationship>
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, AsRefStr)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum RelationshipType {

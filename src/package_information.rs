@@ -181,7 +181,7 @@ impl PackageInformation {
         Self {
             package_name: name.to_string(),
             package_spdx_identifier: format!("SPDXRef-{}", id),
-            ..Default::default()
+            ..Self::default()
         }
     }
 
@@ -192,13 +192,10 @@ impl PackageInformation {
     ) -> Vec<&'a FileInformation> {
         self.files
             .iter()
-            .map(|file| {
+            .filter_map(|file| {
                 files
                     .iter()
                     .find(|file_information| &file_information.file_spdx_identifier == file)
-                    // Unwrap, the file should always exist in files.
-                    // TODO: Proper error handling.
-                    .unwrap()
             })
             .collect()
     }

@@ -11,6 +11,9 @@ license = "MIT"
 description = "Parse and interact with SPDX Documents"
 homepage = "https://github.com/doubleopen-project/spdx-rs"
 repository = "https://github.com/doubleopen-project/spdx-rs"
+readme = "README.md"
+keywords = ["SPDX"]
+categories = ["data-structures"]
 exclude = [
   "/tests/",
   "/.github/",

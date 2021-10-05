@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference
+/// <https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference>
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalPackageReference {
@@ -17,7 +17,7 @@ pub struct ExternalPackageReference {
     pub reference_comment: Option<String>,
 }
 
-/// https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference
+/// <https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference>
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "SCREAMING-KEBAB-CASE")]
 pub enum ExternalPackageReferenceCategory {

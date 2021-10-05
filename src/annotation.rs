@@ -5,7 +5,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-/// https://spdx.github.io/spdx-spec/8-annotations/
+/// <https://spdx.github.io/spdx-spec/8-annotations/>
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Annotation {
@@ -28,7 +28,7 @@ pub struct Annotation {
     pub annotation_comment: String,
 }
 
-/// https://spdx.github.io/spdx-spec/8-annotations/#83-annotation-type
+/// <https://spdx.github.io/spdx-spec/8-annotations/#83-annotation-type>
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AnnotationType {

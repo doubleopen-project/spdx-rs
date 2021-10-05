@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: MIT
 
+#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![allow(clippy::must_use_candidate, clippy::module_name_repetitions)]
+
 pub mod algorithm;
 pub mod annotation;
 pub mod checksum;
@@ -50,7 +53,7 @@ use self::Relationship;
 /// Store information about files in SPDX files. Latest spec
 /// is currently 2.2. Can be serialized to JSON.  
 ///     
-/// Spec: https://spdx.github.io/spdx-spec/
+/// Spec: <https://spdx.github.io/spdx-spec/>
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SPDX {
@@ -104,7 +107,7 @@ impl SPDX {
                     name.to_string(),
                     Uuid::new_v4()
                 ),
-                ..Default::default()
+                ..DocumentCreationInformation::default()
             },
             package_information: Vec::new(),
             other_licensing_information_detected: Vec::new(),
@@ -117,6 +120,11 @@ impl SPDX {
     }
 
     /// Deserialize from file. Accepts json and yaml.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SpdxError`] if the file can't be opened or there is a problem with deserializing
+    /// the file to [`SPDX`].
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, SpdxError> {
         info!("Deserializing SPDX from {}", path.as_ref().display());
 
@@ -129,23 +137,23 @@ impl SPDX {
             .ok_or_else(|| SpdxError::PathExtension(path.to_string_lossy().to_string()))?
             .to_str()
         {
-            Some("yml") => Ok(serde_yaml::from_reader::<_, SPDX>(reader)?),
-            Some("json") => Ok(serde_json::from_reader::<_, SPDX>(reader)?),
+            Some("yml") => Ok(serde_yaml::from_reader::<_, Self>(reader)?),
+            Some("json") => Ok(serde_json::from_reader::<_, Self>(reader)?),
             None | Some(_) => Err(SpdxError::PathExtension(path.to_string_lossy().to_string())),
         }
     }
 
     /// Get unique hashes for all files in all packages of the SPDX.
-    pub fn get_unique_hashes(&self, algorithm: Algorithm) -> Vec<String> {
+    pub fn get_unique_hashes(&self, algorithm: &Algorithm) -> Vec<String> {
         info!("Getting unique hashes for files in SPDX.");
 
         let mut unique_hashes: Vec<String> = Vec::new();
 
-        for file_information in self.file_information.iter() {
+        for file_information in &self.file_information {
             if let Some(checksum) = file_information
                 .file_checksum
                 .iter()
-                .find(|checksum| checksum.algorithm == algorithm)
+                .find(|checksum| checksum.algorithm == *algorithm)
             {
                 unique_hashes.push(checksum.value.clone());
             }
@@ -158,6 +166,10 @@ impl SPDX {
     }
 
     /// Save serialized SPDX as json,
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SpdxError`] if the [`SPDX`] can't be serialized or the file can't be written.
     pub fn save_as_json<P: AsRef<Path>>(&self, path: P) -> Result<(), SpdxError> {
         println!("Saving to json...");
 
@@ -187,7 +199,7 @@ impl SPDX {
                 .iter()
                 .find(|file| file.file_spdx_identifier == relationship.related_spdx_element);
             if let Some(file) = file {
-                result.push((&file, &relationship));
+                result.push((file, relationship));
             };
         }
 
@@ -236,16 +248,12 @@ impl SPDX {
     pub fn find_path_between_spdx_ids(&self, from: &str, to: &str) -> Option<Vec<String>> {
         let graph = self.graph();
         let path = find_path(&graph, from, to);
-        if let Some(path) = path {
-            Some(
-                path_with_relationships(&graph, path.1)
-                    .iter()
-                    .map(|part| part.to_string())
-                    .collect(),
-            )
-        } else {
-            None
-        }
+        path.map(|path| {
+            path_with_relationships(&graph, path.1)
+                .iter()
+                .map(|part| (*part).to_string())
+                .collect()
+        })
     }
 }
 
@@ -818,12 +826,12 @@ compatible system run time libraries."#
                 assert_eq!(
                     spdx.other_licensing_information_detected[0].license_identifier,
                     "LicenseRef-Beerware-4.2".to_string()
-                )
+                );
             }
             #[test]
             fn extracted_text() {
                 let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
-                assert_eq!(spdx.other_licensing_information_detected[0].extracted_text, "\"THE BEER-WARE LICENSE\" (Revision 42):\nphk@FreeBSD.ORG wrote this file. As long as you retain this notice you\ncan do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp  </\nLicenseName: Beer-Ware License (Version 42)\nLicenseCrossReference:  http://people.freebsd.org/~phk/\nLicenseComment: \nThe beerware license has a couple of other standard variants.")
+                assert_eq!(spdx.other_licensing_information_detected[0].extracted_text, "\"THE BEER-WARE LICENSE\" (Revision 42):\nphk@FreeBSD.ORG wrote this file. As long as you retain this notice you\ncan do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return Poul-Henning Kamp  </\nLicenseName: Beer-Ware License (Version 42)\nLicenseCrossReference:  http://people.freebsd.org/~phk/\nLicenseComment: \nThe beerware license has a couple of other standard variants.");
             }
             #[test]
             fn license_name() {
@@ -831,7 +839,7 @@ compatible system run time libraries."#
                 assert_eq!(
                     spdx.other_licensing_information_detected[2].license_name,
                     "CyberNeko License".to_string()
-                )
+                );
             }
             #[test]
             fn license_cross_reference() {
@@ -842,7 +850,7 @@ compatible system run time libraries."#
                         "http://people.apache.org/~andyc/neko/LICENSE".to_string(),
                         "http://justasample.url.com".to_string()
                     ]
-                )
+                );
             }
             #[test]
             fn license_comment() {
@@ -850,7 +858,7 @@ compatible system run time libraries."#
                 assert_eq!(
                     spdx.other_licensing_information_detected[2].license_comment,
                     Some("This is tye CyperNeko License".to_string())
-                )
+                );
             }
         }
 
@@ -986,7 +994,7 @@ compatible system run time libraries."#
         };
         let expected_relationships = vec![&relationship_1, &relationship_2];
 
-        assert_eq!(relationships, expected_relationships)
+        assert_eq!(relationships, expected_relationships);
     }
 
     #[test]
@@ -1014,7 +1022,7 @@ compatible system run time libraries."#
         };
         let expected_relationships = vec![&relationship_1, &relationship_2, &relationship_3];
 
-        assert_eq!(relationships, expected_relationships)
+        assert_eq!(relationships, expected_relationships);
     }
 
     #[test]

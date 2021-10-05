@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::SPDXExpression;
 
-/// https://spdx.github.io/spdx-spec/5-snippet-information/
+/// <https://spdx.github.io/spdx-spec/5-snippet-information/>
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Snippet {
     /// https://spdx.github.io/spdx-spec/5-snippet-information/#51-snippet-spdx-identifier
@@ -61,7 +61,7 @@ pub struct Snippet {
     pub snippet_attribution_text: Option<String>,
 }
 
-/// https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range
+/// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Range {
@@ -69,7 +69,7 @@ pub struct Range {
     pub end_pointer: EndPointer,
 }
 
-/// https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range
+/// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct StartPointer {
@@ -78,7 +78,7 @@ pub struct StartPointer {
     pub line_number: Option<i32>,
 }
 
-/// https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range
+/// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct EndPointer {

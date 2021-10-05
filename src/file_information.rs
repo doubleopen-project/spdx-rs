@@ -100,7 +100,7 @@ impl FileInformation {
         Self {
             file_name: name.to_string(),
             file_spdx_identifier: format!("SPDXRef-{}", id),
-            ..Default::default()
+            ..Self::default()
         }
     }
 
@@ -111,11 +111,9 @@ impl FileInformation {
             .iter()
             .find(|&checksum| checksum.algorithm == algorithm);
 
-        if let Some(checksum) = checksum {
+        checksum.map_or(false, |checksum| {
             checksum.value.to_ascii_lowercase() == value.to_ascii_lowercase()
-        } else {
-            false
-        }
+        })
     }
 
     /// Get checksum
