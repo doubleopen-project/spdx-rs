@@ -14,15 +14,15 @@ use super::{Checksum, FileInformation, SPDXExpression};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PackageInformation {
-    /// https://spdx.github.io/spdx-spec/3-package-information/#31-package-name
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#31-package-name>
     #[serde(rename = "name")]
     pub package_name: String,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#32-package-spdx-identifier
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#32-package-spdx-identifier>
     #[serde(rename = "SPDXID")]
     pub package_spdx_identifier: String,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#33-package-version
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#33-package-version>
     #[serde(
         rename = "versionInfo",
         skip_serializing_if = "Option::is_none",
@@ -30,15 +30,15 @@ pub struct PackageInformation {
     )]
     pub package_version: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#34-package-file-name
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#34-package-file-name>
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub package_file_name: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#35-package-supplier
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#35-package-supplier>
     #[serde(rename = "supplier", skip_serializing_if = "Option::is_none", default)]
     pub package_supplier: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#36-package-originator
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#36-package-originator>
     #[serde(
         rename = "originator",
         skip_serializing_if = "Option::is_none",
@@ -46,27 +46,27 @@ pub struct PackageInformation {
     )]
     pub package_originator: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#37-package-download-location
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#37-package-download-location>
     #[serde(rename = "downloadLocation")]
     pub package_download_location: String,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#38-files-analyzed
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#38-files-analyzed>
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub files_analyzed: Option<bool>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#39-package-verification-code
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#39-package-verification-code>
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub package_verification_code: Option<PackageVerificationCode>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#310-package-checksum
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#310-package-checksum>
     #[serde(rename = "checksums", skip_serializing_if = "Vec::is_empty", default)]
     pub package_checksum: Vec<Checksum>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#311-package-home-page
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#311-package-home-page>
     #[serde(rename = "homepage", skip_serializing_if = "Option::is_none", default)]
     pub package_home_page: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#312-source-information
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#312-source-information>
     #[serde(
         rename = "sourceInfo",
         skip_serializing_if = "Option::is_none",
@@ -74,11 +74,11 @@ pub struct PackageInformation {
     )]
     pub source_information: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#313-concluded-license
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#313-concluded-license>
     #[serde(rename = "licenseConcluded")]
     pub concluded_license: SPDXExpression,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#314-all-licenses-information-from-files
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#314-all-licenses-information-from-files>
     #[serde(
         rename = "licenseInfoFromFiles",
         skip_serializing_if = "Vec::is_empty",
@@ -86,11 +86,11 @@ pub struct PackageInformation {
     )]
     pub all_licenses_information_from_files: Vec<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#315-declared-license
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#315-declared-license>
     #[serde(rename = "licenseDeclared")]
     pub declared_license: SPDXExpression,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#316-comments-on-license
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#316-comments-on-license>
     #[serde(
         rename = "licenseComments",
         skip_serializing_if = "Option::is_none",
@@ -98,14 +98,14 @@ pub struct PackageInformation {
     )]
     pub comments_on_license: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#317-copyright-text
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#317-copyright-text>
     pub copyright_text: String,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#318-package-summary-description
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#318-package-summary-description>
     #[serde(rename = "summary", skip_serializing_if = "Option::is_none", default)]
     pub package_summary_description: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#319-package-detailed-description
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#319-package-detailed-description>
     #[serde(
         rename = "description",
         skip_serializing_if = "Option::is_none",
@@ -113,11 +113,11 @@ pub struct PackageInformation {
     )]
     pub package_detailed_description: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#320-package-comment
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#320-package-comment>
     #[serde(rename = "comment", skip_serializing_if = "Option::is_none", default)]
     pub package_comment: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference>
     #[serde(
         rename = "externalRefs",
         skip_serializing_if = "Vec::is_empty",
@@ -125,7 +125,7 @@ pub struct PackageInformation {
     )]
     pub external_reference: Vec<ExternalPackageReference>,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/#323-package-attribution-text
+    /// <https://spdx.github.io/spdx-spec/3-package-information/#323-package-attribution-text>
     #[serde(
         rename = "attributionTexts",
         skip_serializing_if = "Vec::is_empty",
@@ -134,7 +134,7 @@ pub struct PackageInformation {
     pub package_attribution_text: Vec<String>,
 
     /// List of "files in the package". Not sure which relationship type this maps to.
-    /// Info: https://github.com/spdx/spdx-spec/issues/487
+    /// Info: <https://github.com/spdx/spdx-spec/issues/487>
     // Valid SPDX?
     #[serde(rename = "hasFiles", skip_serializing_if = "Vec::is_empty", default)]
     pub files: Vec<String>,

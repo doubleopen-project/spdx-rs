@@ -12,30 +12,30 @@ use super::{Algorithm, Checksum, SPDXExpression};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FileInformation {
-    /// https://spdx.github.io/spdx-spec/4-file-information/#41-file-name
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#41-file-name>
     pub file_name: String,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#42-file-spdx-identifier
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#42-file-spdx-identifier>
     #[serde(rename = "SPDXID")]
     pub file_spdx_identifier: String,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#43-file-type
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#43-file-type>
     #[serde(rename = "fileTypes", skip_serializing_if = "Vec::is_empty", default)]
     pub file_type: Vec<FileType>,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#44-file-checksum
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#44-file-checksum>
     #[serde(rename = "checksums")]
     pub file_checksum: Vec<Checksum>,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#45-concluded-license
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#45-concluded-license>
     #[serde(rename = "licenseConcluded")]
     pub concluded_license: SPDXExpression,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#46-license-information-in-file
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#46-license-information-in-file>
     #[serde(rename = "licenseInfoInFiles")]
     pub license_information_in_file: Vec<String>,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#47-comments-on-license
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#47-comments-on-license>
     #[serde(
         rename = "licenseComments",
         skip_serializing_if = "Option::is_none",
@@ -43,14 +43,14 @@ pub struct FileInformation {
     )]
     pub comments_on_license: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#48-copyright-text
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#48-copyright-text>
     pub copyright_text: String,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#412-file-comment
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#412-file-comment>
     #[serde(rename = "comment", skip_serializing_if = "Option::is_none", default)]
     pub file_comment: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#413-file-notice
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#413-file-notice>
     #[serde(
         rename = "noticeText",
         skip_serializing_if = "Option::is_none",
@@ -58,7 +58,7 @@ pub struct FileInformation {
     )]
     pub file_notice: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#414-file-contributor
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#414-file-contributor>
     #[serde(
         rename = "fileContributors",
         skip_serializing_if = "Vec::is_empty",
@@ -66,7 +66,7 @@ pub struct FileInformation {
     )]
     pub file_contributor: Vec<String>,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/#415-file-attribution-text
+    /// <https://spdx.github.io/spdx-spec/4-file-information/#415-file-attribution-text>
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub file_attribution_text: Option<Vec<String>>,
     // TODO: Snippet Information.

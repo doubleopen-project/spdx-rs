@@ -13,25 +13,25 @@ use super::Checksum;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentCreationInformation {
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#21-spdx-version
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#21-spdx-version>
     pub spdx_version: String,
 
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#22-data-license
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#22-data-license>
     pub data_license: String,
 
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#23-spdx-identifier
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#23-spdx-identifier>
     #[serde(rename = "SPDXID")]
     pub spdx_identifier: String,
 
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#24-document-name
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#24-document-name>
     #[serde(rename = "name")]
     pub document_name: String,
 
-    ///https://spdx.github.io/spdx-spec/2-document-creation-information/#25-spdx-document-namespace
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#25-spdx-document-namespace>
     #[serde(rename = "documentNamespace")]
     pub spdx_document_namespace: String,
 
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#26-external-document-references
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#26-external-document-references>
     #[serde(
         rename = "externalDocumentRefs",
         skip_serializing_if = "Vec::is_empty",
@@ -41,12 +41,12 @@ pub struct DocumentCreationInformation {
 
     pub creation_info: CreationInfo,
 
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#211-document-comment
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#211-document-comment>
     #[serde(rename = "comment", skip_serializing_if = "Option::is_none", default)]
     pub document_comment: Option<String>,
 
     /// Doesn't seem to be in spec, but the example contains it.
-    /// https://github.com/spdx/spdx-spec/issues/395
+    /// <https://github.com/spdx/spdx-spec/issues/395>
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub document_describes: Vec<String>,
 }
@@ -72,17 +72,17 @@ impl Default for DocumentCreationInformation {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreationInfo {
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#27-license-list-version
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#27-license-list-version>
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub license_list_version: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#28-creator
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#28-creator>
     pub creators: Vec<String>,
 
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#29-created
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#29-created>
     pub created: DateTime<Utc>,
 
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/#210-creator-comment
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#210-creator-comment>
     #[serde(skip_serializing_if = "Option::is_none", default)]
     #[serde(rename = "comment")]
     pub creator_comment: Option<String>,
@@ -115,7 +115,7 @@ pub struct ExternalDocumentReference {
     pub spdx_document_uri: String,
 
     /// Checksum of the external document following the checksum format defined
-    /// in https://spdx.github.io/spdx-spec/4-file-information/#44-file-checksum.
+    /// in <https://spdx.github.io/spdx-spec/4-file-information/#44-file-checksum.>
     pub checksum: Checksum,
 }
 

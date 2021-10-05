@@ -26,35 +26,35 @@ use super::{
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SPDX {
-    /// https://spdx.github.io/spdx-spec/2-document-creation-information/
+    /// <https://spdx.github.io/spdx-spec/2-document-creation-information/>
     #[serde(flatten)]
     pub document_creation_information: DocumentCreationInformation,
 
-    /// https://spdx.github.io/spdx-spec/3-package-information/
+    /// <https://spdx.github.io/spdx-spec/3-package-information/>
     #[serde(rename = "packages")]
     #[serde(default)]
     pub package_information: Vec<PackageInformation>,
 
-    /// https://spdx.github.io/spdx-spec/6-other-licensing-information-detected/
+    /// <https://spdx.github.io/spdx-spec/6-other-licensing-information-detected/>
     #[serde(rename = "hasExtractedLicensingInfos")]
     #[serde(default)]
     pub other_licensing_information_detected: Vec<OtherLicensingInformationDetected>,
 
-    /// https://spdx.github.io/spdx-spec/4-file-information/
+    /// <https://spdx.github.io/spdx-spec/4-file-information/>
     #[serde(rename = "files")]
     #[serde(default)]
     pub file_information: Vec<FileInformation>,
 
-    /// https://spdx.github.io/spdx-spec/5-snippet-information/
+    /// <https://spdx.github.io/spdx-spec/5-snippet-information/>
     #[serde(rename = "snippets")]
     #[serde(default)]
     pub snippet_information: Vec<Snippet>,
 
-    /// https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/
+    /// <https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/>
     #[serde(default)]
     pub relationships: Vec<Relationship>,
 
-    /// https://spdx.github.io/spdx-spec/8-annotations/
+    /// <https://spdx.github.io/spdx-spec/8-annotations/>
     #[serde(default)]
     pub annotations: Vec<Annotation>,
 

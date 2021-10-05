@@ -9,21 +9,21 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Annotation {
-    /// https://spdx.github.io/spdx-spec/8-annotations/#81-annotator
+    /// <https://spdx.github.io/spdx-spec/8-annotations/#81-annotator>
     pub annotator: String,
 
-    /// https://spdx.github.io/spdx-spec/8-annotations/#82-annotation-date
+    /// <https://spdx.github.io/spdx-spec/8-annotations/#82-annotation-date>
     pub annotation_date: DateTime<Utc>,
 
-    /// https://spdx.github.io/spdx-spec/8-annotations/#83-annotation-type
+    /// <https://spdx.github.io/spdx-spec/8-annotations/#83-annotation-type>
     pub annotation_type: AnnotationType,
 
-    /// https://spdx.github.io/spdx-spec/8-annotations/#84-spdx-identifier-reference
+    /// <https://spdx.github.io/spdx-spec/8-annotations/#84-spdx-identifier-reference>
     // TODO: According to the spec this is mandatory, but the example file doesn't
     // have it.
     pub spdx_identifier_reference: Option<String>,
 
-    /// https://spdx.github.io/spdx-spec/8-annotations/#85-annotation-comment
+    /// <https://spdx.github.io/spdx-spec/8-annotations/#85-annotation-comment>
     #[serde(rename = "comment")]
     pub annotation_comment: String,
 }
