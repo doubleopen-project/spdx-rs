@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+use std::collections::HashSet;
 use std::{fs, io::BufReader, path::Path};
 
 use log::info;
@@ -112,24 +113,17 @@ impl SPDX {
         }
     }
 
-    /// Get unique hashes for all files in all packages of the SPDX.
-    pub fn get_unique_hashes(&self, algorithm: &Algorithm) -> Vec<String> {
+    /// Get unique hashes for all files the SPDX.
+    pub fn get_unique_hashes(&self, algorithm: Algorithm) -> HashSet<String> {
         info!("Getting unique hashes for files in SPDX.");
 
-        let mut unique_hashes: Vec<String> = Vec::new();
+        let mut unique_hashes: HashSet<String> = HashSet::new();
 
         for file_information in &self.file_information {
-            if let Some(checksum) = file_information
-                .file_checksum
-                .iter()
-                .find(|checksum| checksum.algorithm == *algorithm)
-            {
-                unique_hashes.push(checksum.value.clone());
+            if let Some(checksum) = file_information.checksum(algorithm) {
+                unique_hashes.insert(checksum.to_string());
             }
         }
-
-        unique_hashes.sort();
-        unique_hashes.dedup();
 
         unique_hashes
     }
@@ -176,9 +170,9 @@ impl SPDX {
     }
 
     /// Get all license identifiers from the SPDX.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns [`SpdxError`] if parsing of the expressions fails.
     pub fn get_license_ids(&self) -> Result<Vec<String>, SpdxError> {
         info!("Getting all license identifiers from SPDX.");
@@ -344,5 +338,23 @@ mod test {
             .find_path_between_spdx_ids("SPDXRef-DOCUMENT", "SPDXRef-Saxon")
             .unwrap();
         dbg!(path);
+    }
+
+    #[test]
+    fn get_unique_hashes_for_files() {
+        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let hashes = spdx.get_unique_hashes(Algorithm::SHA1);
+
+        let expected = [
+            "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12".to_string(),
+            "c2b4e1c67a2d28fced849ee1bb76e7391b93f125".to_string(),
+            "3ab4e1c67a2d28fced849ee1bb76e7391b93f125".to_string(),
+            "d6a770ba38583ed4bb4525bd96e50461655d2758".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect::<HashSet<_>>();
+
+        assert_eq!(hashes, expected);
     }
 }
