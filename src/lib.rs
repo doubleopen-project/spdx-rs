@@ -7,7 +7,6 @@ pub mod annotation;
 pub mod checksum;
 pub mod creation_info;
 pub mod document_creation_information;
-pub mod doubleopen;
 pub mod error;
 pub mod external_document_reference;
 pub mod external_package_reference;
