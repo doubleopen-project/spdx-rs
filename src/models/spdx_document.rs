@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::HashSet;
-use std::{fs, io::BufReader, path::Path};
 
 use log::info;
 use petgraph::graphmap::DiGraphMap;
@@ -89,30 +88,6 @@ impl SPDX {
         }
     }
 
-    /// Deserialize from file. Accepts json and yaml.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`SpdxError`] if the file can't be opened or there is a problem with deserializing
-    /// the file to [`SPDX`].
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, SpdxError> {
-        info!("Deserializing SPDX from {}", path.as_ref().display());
-
-        let path = path.as_ref();
-        let file = fs::File::open(&path)?;
-        let reader = BufReader::new(file);
-
-        match path
-            .extension()
-            .ok_or_else(|| SpdxError::PathExtension(path.to_string_lossy().to_string()))?
-            .to_str()
-        {
-            Some("yml") => Ok(serde_yaml::from_reader::<_, Self>(reader)?),
-            Some("json") => Ok(serde_json::from_reader::<_, Self>(reader)?),
-            None | Some(_) => Err(SpdxError::PathExtension(path.to_string_lossy().to_string())),
-        }
-    }
-
     /// Get unique hashes for all files the SPDX.
     pub fn get_unique_hashes(&self, algorithm: Algorithm) -> HashSet<String> {
         info!("Getting unique hashes for files in SPDX.");
@@ -126,20 +101,6 @@ impl SPDX {
         }
 
         unique_hashes
-    }
-
-    /// Save serialized SPDX as json,
-    ///
-    /// # Errors
-    ///
-    /// Returns [`SpdxError`] if the [`SPDX`] can't be serialized or the file can't be written.
-    pub fn save_as_json<P: AsRef<Path>>(&self, path: P) -> Result<(), SpdxError> {
-        println!("Saving to json...");
-
-        let json = serde_json::to_string_pretty(&self)?;
-        fs::write(path, json)?;
-
-        Ok(())
     }
 
     /// Find related files of the package with the provided id.
@@ -226,13 +187,19 @@ impl SPDX {
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use crate::models::SPDXExpression;
 
     use super::*;
 
     #[test]
     fn deserialize_simple_spdx() {
-        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
+
         assert_eq!(
             spdx_file.document_creation_information.document_name,
             "SPDX-Tools-v2.0".to_string()
@@ -241,7 +208,10 @@ mod test {
 
     #[test]
     fn find_related_files_for_package() {
-        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
 
         let package_1_files = spdx_file.get_files_for_package("SPDXRef-Package");
 
@@ -265,7 +235,10 @@ mod test {
 
     #[test]
     fn get_all_licenses_from_spdx() {
-        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
 
         let mut actual = spdx_file.get_license_ids().unwrap();
         actual.sort();
@@ -283,7 +256,10 @@ mod test {
 
     #[test]
     fn get_relationships_for_spdx_id() {
-        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
 
         let relationships = spdx_file.relationships_for_spdx_id("SPDXRef-Package");
         let relationship_1 = Relationship {
@@ -305,7 +281,10 @@ mod test {
 
     #[test]
     fn get_relationships_for_related_spdx_id() {
-        let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
 
         let relationships = spdx_file.relationships_for_related_spdx_id("SPDXRef-Package");
         let relationship_1 = Relationship {
@@ -333,8 +312,11 @@ mod test {
 
     #[test]
     fn find_path_between_ids_works() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
-        let path = spdx
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
+        let path = spdx_file
             .find_path_between_spdx_ids("SPDXRef-DOCUMENT", "SPDXRef-Saxon")
             .unwrap();
         dbg!(path);
@@ -342,8 +324,11 @@ mod test {
 
     #[test]
     fn get_unique_hashes_for_files() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
-        let hashes = spdx.get_unique_hashes(Algorithm::SHA1);
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
+        let hashes = spdx_file.get_unique_hashes(Algorithm::SHA1);
 
         let expected = [
             "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12".to_string(),

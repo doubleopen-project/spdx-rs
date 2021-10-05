@@ -121,6 +121,8 @@ pub struct ExternalDocumentReference {
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use chrono::{TimeZone, Utc};
 
     use super::*;
@@ -128,7 +130,11 @@ mod test {
 
     #[test]
     fn spdx_version() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
+
         assert_eq!(
             spdx.document_creation_information.spdx_version,
             "SPDX-2.2".to_string()
@@ -136,12 +142,19 @@ mod test {
     }
     #[test]
     fn data_license() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
+
         assert_eq!(spdx.document_creation_information.data_license, "CC0-1.0");
     }
     #[test]
     fn spdx_identifier() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.document_creation_information.spdx_identifier,
             "SPDXRef-DOCUMENT".to_string()
@@ -149,7 +162,10 @@ mod test {
     }
     #[test]
     fn document_name() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.document_creation_information.document_name,
             "SPDX-Tools-v2.0".to_string()
@@ -157,7 +173,10 @@ mod test {
     }
     #[test]
     fn spdx_document_namespace() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.document_creation_information.spdx_document_namespace,
             "http://spdx.org/spdxdocs/spdx-example-444504E0-4F89-41D3-9A0C-0305E82C3301"
@@ -166,7 +185,10 @@ mod test {
     }
     #[test]
     fn license_list_version() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.document_creation_information
                 .creation_info
@@ -176,7 +198,10 @@ mod test {
     }
     #[test]
     fn creators() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert!(spdx
             .document_creation_information
             .creation_info
@@ -195,7 +220,10 @@ mod test {
     }
     #[test]
     fn created() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.document_creation_information.creation_info.created,
             Utc.ymd(2010, 1, 29).and_hms(18, 30, 22)
@@ -203,7 +231,10 @@ mod test {
     }
     #[test]
     fn creator_comment() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.document_creation_information
                 .creation_info
@@ -218,7 +249,10 @@ compatible system run time libraries."#
     }
     #[test]
     fn document_comment() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.document_creation_information.document_comment,
             Some(
@@ -230,7 +264,10 @@ compatible system run time libraries."#
 
     #[test]
     fn external_document_references() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert!(spdx
             .document_creation_information
             .external_document_references

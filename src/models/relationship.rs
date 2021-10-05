@@ -91,13 +91,18 @@ pub enum RelationshipType {
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use crate::models::SPDX;
 
     use super::*;
 
     #[test]
     fn spdx_element_id() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.relationships[0].spdx_element_id,
             "SPDXRef-DOCUMENT".to_string()
@@ -105,7 +110,10 @@ mod test {
     }
     #[test]
     fn related_spdx_element() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.relationships[0].related_spdx_element,
             "SPDXRef-Package".to_string()
@@ -113,7 +121,10 @@ mod test {
     }
     #[test]
     fn relationship_type() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.relationships[0].relationship_type,
             RelationshipType::Contains

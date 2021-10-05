@@ -144,6 +144,8 @@ pub enum FileType {
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use super::*;
     use crate::models::{Checksum, FileType, SPDXExpression, SPDX};
 
@@ -188,7 +190,10 @@ mod test {
 
     #[test]
     fn file_name() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[0].file_name,
             "./src/org/spdx/parser/DOAPProject.java"
@@ -196,7 +201,10 @@ mod test {
     }
     #[test]
     fn file_spdx_identifier() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[0].file_spdx_identifier,
             "SPDXRef-DoapSource"
@@ -204,12 +212,18 @@ mod test {
     }
     #[test]
     fn file_type() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(spdx.file_information[0].file_type, vec![FileType::Source]);
     }
     #[test]
     fn file_checksum() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[0].file_checksum,
             vec![Checksum {
@@ -220,7 +234,10 @@ mod test {
     }
     #[test]
     fn concluded_license() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[0].concluded_license,
             SPDXExpression::parse("Apache-2.0").unwrap()
@@ -228,7 +245,10 @@ mod test {
     }
     #[test]
     fn license_information_in_file() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[0].license_information_in_file,
             vec!["Apache-2.0".to_string()]
@@ -236,7 +256,10 @@ mod test {
     }
     #[test]
     fn comments_on_license() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[2].comments_on_license,
             Some("This license is used by Jena".to_string())
@@ -244,7 +267,10 @@ mod test {
     }
     #[test]
     fn copyright_text() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[0].copyright_text,
             "Copyright 2010, 2011 Source Auditor Inc.".to_string()
@@ -252,7 +278,10 @@ mod test {
     }
     #[test]
     fn file_comment() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[1].file_comment,
             Some("This file is used by Jena".to_string())
@@ -260,7 +289,10 @@ mod test {
     }
     #[test]
     fn file_notice() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
                     spdx.file_information[1].file_notice,
                     Some("Apache Commons Lang\nCopyright 2001-2011 The Apache Software Foundation\n\nThis product includes software developed by\nThe Apache Software Foundation (http://www.apache.org/).\n\nThis product includes software from the Spring Framework,\nunder the Apache License 2.0 (see: StringUtils.containsWhitespace())".to_string())
@@ -268,7 +300,10 @@ mod test {
     }
     #[test]
     fn file_contributor() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.file_information[1].file_contributor,
             vec!["Apache Software Foundation".to_string()]

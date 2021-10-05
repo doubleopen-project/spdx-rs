@@ -55,13 +55,17 @@ pub(super) fn path_with_relationships<'a>(
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use petgraph::dot::Dot;
 
     use super::*;
 
     #[test]
     fn create_graph_succeeds() {
-        let spdx = SPDX::from_file("tests/data/SPDXForGraph.spdx.json").unwrap();
+        let spdx: SPDX =
+            serde_json::from_str(&read_to_string("tests/data/SPDXForGraph.spdx.json").unwrap())
+                .unwrap();
         let graph = create_graph(&spdx);
         let dot = Dot::new(&graph);
         dbg!(dot);
@@ -69,7 +73,10 @@ mod test {
 
     #[test]
     fn create_complex_graph_succeeds() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         let graph = create_graph(&spdx);
         let dot = Dot::new(&graph);
         dbg!(dot);
@@ -77,7 +84,10 @@ mod test {
 
     #[test]
     fn find_path_works() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         let graph = create_graph(&spdx);
         let path = find_path(&graph, "SPDXRef-DOCUMENT", "SPDXRef-Saxon").unwrap();
         dbg!(path);
@@ -85,7 +95,9 @@ mod test {
 
     #[test]
     fn find_complex_path_works() {
-        let spdx = SPDX::from_file("tests/data/SPDXForGraph.spdx.json").unwrap();
+        let spdx: SPDX =
+            serde_json::from_str(&read_to_string("tests/data/SPDXForGraph.spdx.json").unwrap())
+                .unwrap();
         let graph = create_graph(&spdx);
         let path = find_path(&graph, "SPDXRef-Package-1", "SPDXRef-File-1").unwrap();
         dbg!(path);
@@ -93,7 +105,10 @@ mod test {
 
     #[test]
     fn find_path_with_relationships_works() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         let graph = create_graph(&spdx);
         let path = find_path(&graph, "SPDXRef-DOCUMENT", "SPDXRef-Saxon").unwrap();
         let path = path_with_relationships(&graph, path.1);
@@ -102,7 +117,9 @@ mod test {
 
     #[test]
     fn find_complex_path_with_relationships_works() {
-        let spdx = SPDX::from_file("tests/data/SPDXForGraph.spdx.json").unwrap();
+        let spdx: SPDX =
+            serde_json::from_str(&read_to_string("tests/data/SPDXForGraph.spdx.json").unwrap())
+                .unwrap();
         let graph = create_graph(&spdx);
         let path = find_path(&graph, "SPDXRef-Package-1", "SPDXRef-File-1").unwrap();
         let path = path_with_relationships(&graph, path.1);

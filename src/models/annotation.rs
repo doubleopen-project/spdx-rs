@@ -38,6 +38,8 @@ pub enum AnnotationType {
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use chrono::TimeZone;
 
     use crate::models::SPDX;
@@ -46,33 +48,48 @@ mod test {
 
     #[test]
     fn annotator() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
-            spdx.annotations[0].annotator,
+            spdx_file.annotations[0].annotator,
             "Person: Jane Doe ()".to_string()
         );
     }
 
     #[test]
     fn annotation_date() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
-            spdx.annotations[0].annotation_date,
+            spdx_file.annotations[0].annotation_date,
             Utc.ymd(2010, 1, 29).and_hms(18, 30, 22)
         );
     }
 
     #[test]
     fn annotation_type() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
-        assert_eq!(spdx.annotations[0].annotation_type, AnnotationType::Other);
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            spdx_file.annotations[0].annotation_type,
+            AnnotationType::Other
+        );
     }
 
     #[test]
     fn annotation_comment() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx_file: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
-            spdx.annotations[0].annotation_comment,
+            spdx_file.annotations[0].annotation_comment,
             "Document level annotation"
         );
     }

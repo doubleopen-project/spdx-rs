@@ -242,18 +242,26 @@ pub enum ExternalPackageReferenceCategory {
 
 #[cfg(test)]
 mod test {
+    use std::fs::read_to_string;
+
     use crate::models::{Algorithm, SPDX};
 
     use super::*;
 
     #[test]
     fn all_packages_are_deserialized() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(spdx.package_information.len(), 4);
     }
     #[test]
     fn package_name() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_name,
             "glibc".to_string()
@@ -261,7 +269,10 @@ mod test {
     }
     #[test]
     fn package_spdx_identifier() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_spdx_identifier,
             "SPDXRef-Package".to_string()
@@ -269,7 +280,10 @@ mod test {
     }
     #[test]
     fn package_version() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_version,
             Some("2.11.1".to_string())
@@ -277,7 +291,10 @@ mod test {
     }
     #[test]
     fn package_file_name() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_file_name,
             Some("glibc-2.11.1.tar.gz".to_string())
@@ -285,7 +302,10 @@ mod test {
     }
     #[test]
     fn package_supplier() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_supplier,
             Some("Person: Jane Doe (jane.doe@example.com)".to_string())
@@ -293,7 +313,10 @@ mod test {
     }
     #[test]
     fn package_originator() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_originator,
             Some("Organization: ExampleCodeInspect (contact@example.com)".to_string())
@@ -301,7 +324,10 @@ mod test {
     }
     #[test]
     fn package_download_location() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_download_location,
             "http://ftp.gnu.org/gnu/glibc/glibc-ports-2.15.tar.gz".to_string()
@@ -309,12 +335,18 @@ mod test {
     }
     #[test]
     fn files_analyzed() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(spdx.package_information[0].files_analyzed, Some(true));
     }
     #[test]
     fn package_verification_code() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_verification_code,
             Some(PackageVerificationCode {
@@ -325,7 +357,10 @@ mod test {
     }
     #[test]
     fn package_chekcsum() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert!(spdx.package_information[0]
             .package_checksum
             .contains(&Checksum::new(
@@ -347,7 +382,10 @@ mod test {
     }
     #[test]
     fn package_home_page() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_home_page,
             Some("http://ftp.gnu.org/gnu/glibc".to_string())
@@ -355,7 +393,10 @@ mod test {
     }
     #[test]
     fn source_information() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].source_information,
             Some("uses glibc-2_11-branch from git://sourceware.org/git/glibc.git.".to_string())
@@ -363,7 +404,10 @@ mod test {
     }
     #[test]
     fn concluded_license() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].concluded_license,
             SPDXExpression::parse("(LGPL-2.0-only OR LicenseRef-3)").unwrap()
@@ -371,7 +415,10 @@ mod test {
     }
     #[test]
     fn all_licenses_information_from_files() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert!(spdx.package_information[0]
             .all_licenses_information_from_files
             .contains(&"GPL-2.0-only".to_string()));
@@ -384,7 +431,10 @@ mod test {
     }
     #[test]
     fn declared_license() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].declared_license,
             SPDXExpression::parse("(LGPL-2.0-only AND LicenseRef-3)").unwrap()
@@ -392,7 +442,10 @@ mod test {
     }
     #[test]
     fn comments_on_license() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
                     spdx.package_information[0].comments_on_license,
                     Some("The license for this project changed with the release of version x.y.  The version of the project included here post-dates the license change.".to_string())
@@ -400,7 +453,10 @@ mod test {
     }
     #[test]
     fn copyright_text() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].copyright_text,
             "Copyright 2008-2010 John Smith".to_string()
@@ -408,7 +464,10 @@ mod test {
     }
     #[test]
     fn package_summary_description() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[0].package_summary_description,
             Some("GNU C library.".to_string())
@@ -416,7 +475,10 @@ mod test {
     }
     #[test]
     fn package_detailed_description() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
                     spdx.package_information[0].package_detailed_description,
                     Some("The GNU C Library defines functions that are specified by the ISO C standard, as well as additional features specific to POSIX and other derivatives of the Unix operating system, and extensions specific to GNU systems.".to_string())
@@ -424,7 +486,10 @@ mod test {
     }
     #[test]
     fn package_comment() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert_eq!(
             spdx.package_information[1].package_comment,
             Some("This package was converted from a DOAP Project by the same name".to_string())
@@ -432,7 +497,10 @@ mod test {
     }
     #[test]
     fn external_reference() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert!(
                     spdx.package_information[0].external_reference.contains(&ExternalPackageReference {
                         reference_comment: Some("This is the external ref for Acme".to_string()),
@@ -453,7 +521,10 @@ mod test {
     }
     #[test]
     fn package_attribution_text() {
-        let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
+        let spdx: SPDX = serde_json::from_str(
+            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
+        )
+        .unwrap();
         assert!(
                     spdx.package_information[0].package_attribution_text.contains(&"The GNU C Library is free software.  See the file COPYING.LIB for copying conditions, and LICENSES for notices about a few contributions that require these additional notices to be distributed.  License copyright years may be listed using range notation, e.g., 1996-2015, indicating that every year in the range, inclusive, is a copyrightable year that would otherwise be listed individually.".to_string())
                 );
