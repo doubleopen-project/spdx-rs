@@ -1,0 +1,16 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: SPDX-rs
+Upstream-Contact: HH Partners <mikko.murto@hhpartners.fi>
+Source: https://github.com/doubleopen-project/spdx-rs
+
+Files: tests/data/*.spdx.json
+Copyright: HH Partners
+License: CC0-1.0
+
+Files: tests/data/exceptions.json
+Copyright: HH Partners
+License: CC0-1.0
+
+Files: tests/data/licenses.json
+Copyright: HH Partners
+License: CC0-1.0

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 HH Partners
+//
+// SPDX-License-Identifier: MIT
+
 use std::collections::HashMap;
 
 use petgraph::{algo::astar, graphmap::DiGraphMap, EdgeDirection};

@@ -1,2 +1,6 @@
+# SPDX-FileCopyrightText: 2021 HH Partners
+# 
+# SPDX-License-Identifier: MIT
+
 /target
 Cargo.lock
