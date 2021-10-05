@@ -47,7 +47,7 @@ pub(crate) fn path_with_relationships<'a>(
                 .find(|edge| edge.1 == spdx_id)
                 .unwrap();
 
-            path_with_relationships.push(edge.2.as_ref())
+            path_with_relationships.push(edge.2.as_ref());
         }
         path_with_relationships.push(spdx_id);
     }
