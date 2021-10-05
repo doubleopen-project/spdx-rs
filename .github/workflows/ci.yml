@@ -14,15 +14,42 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  Test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
-      - name: Build and run tests
-        run: cargo test --verbose
+        name: Checkout
+      - uses: Swatinem/rust-cache@v1
+      - uses: actions-rs/cargo@v1
+        name: Cargo build
+        if: always()
+        id: build
+        with:
+          command: test
+          args: --no-run
+      - uses: actions-rs/cargo@v1
+        name: Cargo test
+        if: always()
+        id: test
+        with:
+          command: test 
+          args: -- --include-ignored
+      - uses: actions-rs/cargo@v1
+        name: Cargo clippy
+        if: always()
+        id: clippy
+        with:
+          command: clippy
+          args: -- -D warnings
+      - uses: actions-rs/cargo@v1
+        name: Cargo fmt
+        if: always()
+        id: format
+        with:
+          command: fmt
+          args: --all -- --check
 
-  reuse:
+  Reuse:
     runs-on: ubuntu-latest
 
     steps:
