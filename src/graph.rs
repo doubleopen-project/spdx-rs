@@ -1,15 +1,10 @@
 use std::collections::HashMap;
 
-use petgraph::{
-    algo::astar,
-    dot::Dot,
-    graphmap::{DiGraphMap, GraphMap},
-    Directed, EdgeDirection,
-};
+use petgraph::{algo::astar, graphmap::DiGraphMap, EdgeDirection};
 
-use crate::{RelationshipType, SPDX};
+use crate::models::{RelationshipType, SPDX};
 
-pub(crate) fn create_graph(spdx: &SPDX) -> DiGraphMap<&str, &RelationshipType> {
+pub(super) fn create_graph(spdx: &SPDX) -> DiGraphMap<&str, &RelationshipType> {
     let mut g = DiGraphMap::<&str, &RelationshipType>::new();
     let mut nodes: HashMap<&str, &str> = HashMap::new();
     for relationship in &spdx.relationships {
@@ -24,7 +19,7 @@ pub(crate) fn create_graph(spdx: &SPDX) -> DiGraphMap<&str, &RelationshipType> {
     g
 }
 
-pub(crate) fn find_path<'a>(
+pub(super) fn find_path<'a>(
     graph: &'a DiGraphMap<&'a str, &'a RelationshipType>,
     start: &'a str,
     end: &'a str,
@@ -32,7 +27,7 @@ pub(crate) fn find_path<'a>(
     astar(graph, start, |goal| end == goal, |_| 1, |_| 0)
 }
 
-pub(crate) fn path_with_relationships<'a>(
+pub(super) fn path_with_relationships<'a>(
     graph: &'a DiGraphMap<&'a str, &'a RelationshipType>,
     path: Vec<&'a str>,
 ) -> Vec<&'a str> {
@@ -52,13 +47,6 @@ pub(crate) fn path_with_relationships<'a>(
         path_with_relationships.push(spdx_id);
     }
     path_with_relationships
-}
-
-/// Create graphviz dot.
-pub fn graphviz<'a>(
-    graph: &'a DiGraphMap<&'a str, &'a RelationshipType>,
-) -> Dot<&GraphMap<&str, &RelationshipType, Directed>> {
-    Dot::new(graph)
 }
 
 #[cfg(test)]

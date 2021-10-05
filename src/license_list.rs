@@ -19,7 +19,7 @@ pub struct LicenseList {
 
 impl LicenseList {
     /// # Errors
-    /// 
+    ///
     /// Returns [`SpdxError`] if there is a problem with retrieving the license list from GitHub
     /// or if deserializing the data fails.
     pub fn from_github() -> Result<Self, SpdxError> {

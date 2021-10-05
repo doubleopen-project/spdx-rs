@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 pub struct SPDXExpression(pub String);
 
 impl SPDXExpression {
-
     /// Get licenses from the expression.
     pub fn licenses(&self) -> Vec<String> {
         let licenses = self.0.split_ascii_whitespace();

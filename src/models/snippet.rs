@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::SPDXExpression;
+use super::SPDXExpression;
 
 /// <https://spdx.github.io/spdx-spec/5-snippet-information/>
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

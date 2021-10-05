@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Annotation, ExternalPackageReference};
+use super::{Annotation, ExternalPackageReference};
 
 use super::{Checksum, FileInformation, PackageVerificationCode, SPDXExpression};
 

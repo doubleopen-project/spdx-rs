@@ -2,9 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-use crate::CreationInfo;
-
-use super::ExternalDocumentReference;
+use super::{CreationInfo, ExternalDocumentReference};
 use serde::{Deserialize, Serialize};
 
 /// ## Document Creation Information

@@ -4,9 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::Algorithm;
-
-use super::{Checksum, FileType, SPDXExpression};
+use super::{Algorithm, Checksum, FileType, SPDXExpression};
 
 /// ## File Information
 ///
