@@ -10,7 +10,7 @@ mod other_licensing_information_detected;
 mod package_information;
 mod relationship;
 mod snippet;
-mod spdx;
+mod spdx_document;
 mod spdx_expression;
 
 pub use annotation::*;
@@ -21,5 +21,5 @@ pub use other_licensing_information_detected::*;
 pub use package_information::*;
 pub use relationship::*;
 pub use snippet::*;
-pub use spdx::*;
+pub use spdx_document::*;
 pub use spdx_expression::*;

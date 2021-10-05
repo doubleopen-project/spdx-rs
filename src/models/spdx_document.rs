@@ -176,7 +176,11 @@ impl SPDX {
     }
 
     /// Get all license identifiers from the SPDX.
-    pub fn get_license_ids(&self) -> Vec<String> {
+    /// 
+    /// # Errors
+    /// 
+    /// Returns [`SpdxError`] if parsing of the expressions fails.
+    pub fn get_license_ids(&self) -> Result<Vec<String>, SpdxError> {
         info!("Getting all license identifiers from SPDX.");
 
         let mut license_ids = Vec::new();
@@ -189,7 +193,7 @@ impl SPDX {
             }
         }
 
-        license_ids
+        Ok(license_ids)
     }
 
     /// Get all relationships where the given SPDX ID is the SPDX element id.
@@ -261,7 +265,7 @@ mod test {
 
         assert_eq!(
             file.0.concluded_license,
-            SPDXExpression("LicenseRef-1".into())
+            SPDXExpression::parse("LicenseRef-1").unwrap()
         );
     }
 
@@ -269,13 +273,13 @@ mod test {
     fn get_all_licenses_from_spdx() {
         let spdx_file = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
 
-        let mut actual = spdx_file.get_license_ids();
+        let mut actual = spdx_file.get_license_ids().unwrap();
         actual.sort();
 
         let mut expected: Vec<String> = vec![
             "Apache-2.0".into(),
             "LicenseRef-1".into(),
-            "LGPL-2.0-only".into(),
+            "LGPL-2.0".into(),
             "LicenseRef-2".into(),
         ];
         expected.sort();

@@ -147,7 +147,7 @@ mod test {
         let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
         assert_eq!(
             spdx.snippet_information[0].snippet_concluded_license,
-            SPDXExpression("GPL-2.0-only".to_string())
+            SPDXExpression::parse("GPL-2.0-only").unwrap()
         );
     }
     #[test]

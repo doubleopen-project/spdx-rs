@@ -25,6 +25,9 @@ pub enum SpdxError {
         source: reqwest::Error,
     },
 
+    #[error("Error parsing an SPDX Expression: {0}")]
+    Parse(String),
+
     #[error("Path {0} doesn't have an extension.")]
     PathExtension(String),
 

@@ -79,7 +79,7 @@ impl Default for FileInformation {
             file_spdx_identifier: "NOASSERTION".to_string(),
             file_type: Vec::new(),
             file_checksum: Vec::new(),
-            concluded_license: SPDXExpression("NOASSERTION".to_string()),
+            concluded_license: SPDXExpression::parse("NOASSERTION").unwrap(),
             license_information_in_file: Vec::new(),
             comments_on_license: None,
             copyright_text: "NOASSERTION".to_string(),
@@ -223,7 +223,7 @@ mod test {
         let spdx = SPDX::from_file("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap();
         assert_eq!(
             spdx.file_information[0].concluded_license,
-            SPDXExpression("Apache-2.0".to_string())
+            SPDXExpression::parse("Apache-2.0").unwrap()
         );
     }
     #[test]
