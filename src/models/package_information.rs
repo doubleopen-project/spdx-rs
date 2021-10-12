@@ -202,7 +202,7 @@ impl PackageInformation {
 }
 
 /// <https://spdx.github.io/spdx-spec/3-package-information/#39-package-verification-code>
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone)]
 pub struct PackageVerificationCode {
     /// Value of the verification code.
     #[serde(rename = "packageVerificationCodeValue")]
@@ -217,8 +217,14 @@ pub struct PackageVerificationCode {
     pub excludes: Vec<String>,
 }
 
+impl PackageVerificationCode {
+    pub fn new(value: String, excludes: Vec<String>) -> Self {
+        Self { value, excludes }
+    }
+}
+
 /// <https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference>
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalPackageReference {
     pub reference_category: ExternalPackageReferenceCategory,
@@ -230,8 +236,24 @@ pub struct ExternalPackageReference {
     pub reference_comment: Option<String>,
 }
 
+impl ExternalPackageReference {
+    pub const fn new(
+        reference_category: ExternalPackageReferenceCategory,
+        reference_type: String,
+        reference_locator: String,
+        reference_comment: Option<String>,
+    ) -> Self {
+        Self {
+            reference_category,
+            reference_type,
+            reference_locator,
+            reference_comment,
+        }
+    }
+}
+
 /// <https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference>
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
 #[serde(rename_all = "SCREAMING-KEBAB-CASE")]
 pub enum ExternalPackageReferenceCategory {
     Security,

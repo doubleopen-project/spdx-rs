@@ -2,14 +2,17 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while},
     character::complete::{alphanumeric0, char, multispace0, not_line_ending},
-    combinator::map,
+    combinator::{map, opt},
     error::{ParseError, VerboseError},
     multi::many0,
     sequence::{delimited, preceded, separated_pair, tuple},
     AsChar, IResult,
 };
 
-use crate::models::{Algorithm, Checksum, ExternalDocumentReference};
+use crate::models::{
+    Algorithm, Checksum, ExternalDocumentReference, ExternalPackageReference,
+    ExternalPackageReferenceCategory, PackageVerificationCode,
+};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 #[allow(clippy::upper_case_acronyms)]
@@ -35,8 +38,8 @@ pub(super) enum Atom {
     PackageOriginator(String),
     PackageDownloadLocation(String),
     FilesAnalyzed(String),
-    PackageVerificationCode(String),
-    PackageChecksum(String),
+    PackageVerificationCode(PackageVerificationCode),
+    PackageChecksum(Checksum),
     PackageHomePage(String),
     PackageSourceInfo(String),
     PackageLicenseConcluded(String),
@@ -47,7 +50,7 @@ pub(super) enum Atom {
     PackageSummary(String),
     PackageDescription(String),
     PackageComment(String),
-    ExternalRef(String),
+    ExternalRef(ExternalPackageReference),
     ExternalRefComment(String),
     PackageAttributionText(String),
 
@@ -133,9 +136,10 @@ fn tag_value_to_atom(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
         }
         "FilesAnalyzed" => Ok((i, Atom::FilesAnalyzed(key_value.1.to_string()))),
         "PackageVerificationCode" => {
-            Ok((i, Atom::PackageVerificationCode(key_value.1.to_string())))
+            let (_, value) = package_verification_code(key_value.1)?;
+            Ok((i, Atom::PackageVerificationCode(value)))
         }
-        "PackageChecksum" => Ok((i, Atom::PackageChecksum(key_value.1.to_string()))),
+        "PackageChecksum" => Ok((i, Atom::PackageChecksum(checksum(key_value.1)?.1))),
         "PackageHomePage" => Ok((i, Atom::PackageHomePage(key_value.1.to_string()))),
         "PackageSourceInfo" => Ok((i, Atom::PackageSourceInfo(key_value.1.to_string()))),
         "PackageLicenseConcluded" => {
@@ -151,7 +155,10 @@ fn tag_value_to_atom(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
         "PackageSummary" => Ok((i, Atom::PackageSummary(key_value.1.to_string()))),
         "PackageDescription" => Ok((i, Atom::PackageDescription(key_value.1.to_string()))),
         "PackageComment" => Ok((i, Atom::PackageComment(key_value.1.to_string()))),
-        "ExternalRef" => Ok((i, Atom::ExternalRef(key_value.1.to_string()))),
+        "ExternalRef" => Ok((
+            i,
+            Atom::ExternalRef(external_package_reference(key_value.1)?.1),
+        )),
         "ExternalRefComment" => Ok((i, Atom::ExternalRefComment(key_value.1.to_string()))),
         "PackageAttributionText" => Ok((i, Atom::PackageAttributionText(key_value.1.to_string()))),
 
@@ -216,8 +223,75 @@ fn external_document_reference(
             ws(take_while(|c: char| !c.is_whitespace())),
             ws(checksum),
         )),
-        |reference| {
-            let checksum_algorithm = match reference.2 .0 {
+        |(id_string, spdx_document_uri, checksum)| {
+            ExternalDocumentReference::new(
+                id_string.to_string(),
+                spdx_document_uri.to_string(),
+                checksum,
+            )
+        },
+    )(i)
+}
+
+fn document_ref<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
+    preceded(tag("DocumentRef-"), ws(idstring))(i)
+}
+
+fn external_package_reference(
+    i: &str,
+) -> IResult<&str, ExternalPackageReference, VerboseError<&str>> {
+    map(
+        tuple((
+            ws(take_while(|c: char| !c.is_whitespace())),
+            ws(take_while(|c: char| !c.is_whitespace())),
+            ws(not_line_ending),
+        )),
+        |(category, ref_type, locator)| {
+            let category = match category {
+                "SECURITY" => ExternalPackageReferenceCategory::Security,
+                "PACKAGE-MANAGER" => ExternalPackageReferenceCategory::PackageManager,
+                "PERSISTENT-ID" => ExternalPackageReferenceCategory::PersistentID,
+                "OTHER" => ExternalPackageReferenceCategory::Other,
+                // TODO: Proper error handling
+                _ => todo!(),
+            };
+            ExternalPackageReference::new(category, ref_type.to_string(), locator.to_string(), None)
+        },
+    )(i)
+}
+
+fn package_verification_code(
+    i: &str,
+) -> IResult<&str, PackageVerificationCode, VerboseError<&str>> {
+    map(
+        alt((
+            separated_pair(
+                ws(take_until("(excludes:")),
+                ws(tag("(excludes:")),
+                opt(take_until(")")),
+            ),
+            map(ws(not_line_ending), |v| (v, None)),
+        )),
+        |(value, exclude)| {
+            let excludes = if let Some(exclude) = exclude {
+                vec![exclude.to_string()]
+            } else {
+                Vec::new()
+            };
+            PackageVerificationCode::new(value.to_string(), excludes)
+        },
+    )(i)
+}
+
+fn idstring<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
+    take_while(|c: char| c.is_alphanum() || c == '.' || c == '-' || c == '+')(i)
+}
+
+fn checksum(i: &str) -> IResult<&str, Checksum, VerboseError<&str>> {
+    map(
+        separated_pair(ws(take_until(":")), char(':'), ws(not_line_ending)),
+        |(algorithm, value)| {
+            let checksum_algorithm = match algorithm {
                 "SHA1" => Algorithm::SHA1,
                 "SHA224" => Algorithm::SHA224,
                 "SHA256" => Algorithm::SHA256,
@@ -230,26 +304,9 @@ fn external_document_reference(
                 // TODO: Use proper error.
                 _ => todo!(),
             };
-            let checksum = Checksum::new(checksum_algorithm, reference.2 .1);
-            ExternalDocumentReference::new(
-                reference.0.to_string(),
-                reference.1.to_string(),
-                checksum,
-            )
+            Checksum::new(checksum_algorithm, value)
         },
     )(i)
-}
-
-fn document_ref<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
-    preceded(tag("DocumentRef-"), ws(idstring))(i)
-}
-
-fn idstring<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
-    take_while(|c: char| c.is_alphanum() || c == '.' || c == '-' || c == '+')(i)
-}
-
-fn checksum<'a>(i: &'a str) -> IResult<&'a str, (&str, &str), VerboseError<&'a str>> {
-    separated_pair(ws(take_until(":")), char(':'), ws(not_line_ending))(i)
 }
 
 fn tv_comment(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
@@ -286,8 +343,11 @@ mod tests {
     use std::fs::read_to_string;
 
     use crate::{
-        models::Algorithm,
-        parsers::tag_value::{checksum, document_ref, external_document_reference},
+        models::{Algorithm, ExternalPackageReferenceCategory},
+        parsers::tag_value::{
+            checksum, document_ref, external_document_reference, external_package_reference,
+            package_verification_code,
+        },
     };
 
     use super::{atoms, tag_value, tag_value_to_atom, Atom};
@@ -302,6 +362,42 @@ mod tests {
     fn data_license_can_be_parsed() {
         let (_, value) = tag_value_to_atom("DataLicense: CC0-1.0").unwrap();
         assert_eq!(value, Atom::DataLicense("CC0-1.0".to_string()));
+    }
+
+    #[test]
+    fn package_verification_code_can_be_parsed() {
+        let (_, value) = package_verification_code(
+            "d6a770ba38583ed4bb4525bd96e50461655d2758(excludes: ./package.spdx)",
+        )
+        .unwrap();
+        assert_eq!(value.value, "d6a770ba38583ed4bb4525bd96e50461655d2758");
+        assert_eq!(value.excludes, vec!["./package.spdx"]);
+    }
+
+    #[test]
+    fn package_verification_code_without_excludes_can_be_parsed() {
+        let (_, value) =
+            package_verification_code("d6a770ba38583ed4bb4525bd96e50461655d2758").unwrap();
+        assert_eq!(value.value, "d6a770ba38583ed4bb4525bd96e50461655d2758");
+        let expected: Vec<String> = Vec::new();
+        assert_eq!(value.excludes, expected);
+    }
+
+    #[test]
+    fn external_package_ref_can_be_parsed() {
+        let (_, value) = external_package_reference(
+            "SECURITY cpe23Type cpe:2.3:a:pivotal_software:spring_framework:4.1.0:*:*:*:*:*:*:*",
+        )
+        .unwrap();
+        assert_eq!(
+            value.reference_category,
+            ExternalPackageReferenceCategory::Security
+        );
+        assert_eq!(value.reference_type, "cpe23Type");
+        assert_eq!(
+            value.reference_locator,
+            "cpe:2.3:a:pivotal_software:spring_framework:4.1.0:*:*:*:*:*:*:*"
+        );
     }
 
     #[test]
@@ -328,8 +424,8 @@ mod tests {
     #[test]
     fn checksum_can_be_parsed() {
         let (_, value) = checksum("SHA1: d6a770ba38583ed4bb4525bd96e50461655d2759").unwrap();
-        assert_eq!(value.0, "SHA1");
-        assert_eq!(value.1, "d6a770ba38583ed4bb4525bd96e50461655d2759");
+        assert_eq!(value.algorithm, Algorithm::SHA1);
+        assert_eq!(value.value, "d6a770ba38583ed4bb4525bd96e50461655d2759");
     }
 
     #[test]
