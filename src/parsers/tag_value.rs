@@ -1,0 +1,430 @@
+use nom::{
+    branch::alt,
+    bytes::complete::{tag, take_until, take_while},
+    character::complete::{alphanumeric0, char, multispace0, not_line_ending},
+    combinator::map,
+    error::{ParseError, VerboseError},
+    multi::many0,
+    sequence::{delimited, preceded, separated_pair, tuple},
+    AsChar, IResult,
+};
+
+use crate::models::{Algorithm, Checksum, ExternalDocumentReference};
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[allow(clippy::upper_case_acronyms)]
+pub(super) enum Atom {
+    // Document Creation Information
+    SpdxVersion(String),
+    DataLicense(String),
+    SPDXID(String),
+    DocumentName(String),
+    DocumentNamespace(String),
+    ExternalDocumentRef(ExternalDocumentReference),
+    LicenseListVersion(String),
+    Creator(String),
+    Created(String),
+    CreatorComment(String),
+    DocumentComment(String),
+
+    // Package Information
+    PackageName(String),
+    PackageVersion(String),
+    PackageFileName(String),
+    PackageSupplier(String),
+    PackageOriginator(String),
+    PackageDownloadLocation(String),
+    FilesAnalyzed(String),
+    PackageVerificationCode(String),
+    PackageChecksum(String),
+    PackageHomePage(String),
+    PackageSourceInfo(String),
+    PackageLicenseConcluded(String),
+    PackageLicenseInfoFromFiles(String),
+    PackageLicenseDeclared(String),
+    PackageLicenseComments(String),
+    PackageCopyrightText(String),
+    PackageSummary(String),
+    PackageDescription(String),
+    PackageComment(String),
+    ExternalRef(String),
+    ExternalRefComment(String),
+    PackageAttributionText(String),
+
+    // File Information
+    FileName(String),
+    FileType(String),
+    FileChecksum(String),
+    LicenseConcluded(String),
+    LicenseInfoInFile(String),
+    LicenseComments(String),
+    FileCopyrightText(String),
+    FileComment(String),
+    FileNotice(String),
+    FileContributor(String),
+    FileAttributionText(String),
+
+    // Snippet Information
+    SnippetSPDXID(String),
+    SnippetFromFileSPDXID(String),
+    SnippetByteRange(String),
+    SnippetLineRange(String),
+    SnippetLicenseConcluded(String),
+    LicenseInfoInSnippet(String),
+    SnippetLicenseComments(String),
+    SnippetCopyrightText(String),
+    SnippetComment(String),
+    SnippetName(String),
+    SnippetAttributionText(String),
+
+    // Other Licensing Information Detected
+    LicenseID(String),
+    ExtractedText(String),
+    LicenseName(String),
+    LicenseCrossReference(String),
+    LicenseComment(String),
+
+    // Relationship
+    Relationship(String),
+    RelationshipComment(String),
+
+    // Annotation
+    Annotator(String),
+    AnnotationDate(String),
+    AnnotationType(String),
+    SPDXREF(String),
+    AnnotationComment(String),
+
+    /// Comment in the document. Not part of the final SPDX.
+    TVComment(String),
+}
+
+pub(super) fn atoms(i: &str) -> IResult<&str, Vec<Atom>, VerboseError<&str>> {
+    many0(alt((ws(tv_comment), ws(tag_value_to_atom))))(i)
+}
+
+fn tag_value_to_atom(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
+    let (i, key_value) = tag_value(i)?;
+    match key_value.0 {
+        // Document Creation Information
+        "SPDXVersion" => Ok((i, Atom::SpdxVersion(key_value.1.to_string()))),
+        "DataLicense" => Ok((i, Atom::DataLicense(key_value.1.to_string()))),
+        "SPDXID" => Ok((i, Atom::SPDXID(key_value.1.to_string()))),
+        "DocumentName" => Ok((i, Atom::DocumentName(key_value.1.to_string()))),
+        "DocumentNamespace" => Ok((i, Atom::DocumentNamespace(key_value.1.to_string()))),
+        "ExternalDocumentRef" => {
+            let (_, value) = external_document_reference(key_value.1)?;
+            Ok((i, Atom::ExternalDocumentRef(value)))
+        }
+        "LicenseListVersion" => Ok((i, Atom::LicenseListVersion(key_value.1.to_string()))),
+        "Creator" => Ok((i, Atom::Creator(key_value.1.to_string()))),
+        "Created" => Ok((i, Atom::Created(key_value.1.to_string()))),
+        "CreatorComment" => Ok((i, Atom::CreatorComment(key_value.1.to_string()))),
+        "DocumentComment" => Ok((i, Atom::DocumentComment(key_value.1.to_string()))),
+
+        // Package Information
+        "PackageName" => Ok((i, Atom::PackageName(key_value.1.to_string()))),
+        "PackageVersion" => Ok((i, Atom::PackageVersion(key_value.1.to_string()))),
+        "PackageFileName" => Ok((i, Atom::PackageFileName(key_value.1.to_string()))),
+        "PackageSupplier" => Ok((i, Atom::PackageSupplier(key_value.1.to_string()))),
+        "PackageOriginator" => Ok((i, Atom::PackageOriginator(key_value.1.to_string()))),
+        "PackageDownloadLocation" => {
+            Ok((i, Atom::PackageDownloadLocation(key_value.1.to_string())))
+        }
+        "FilesAnalyzed" => Ok((i, Atom::FilesAnalyzed(key_value.1.to_string()))),
+        "PackageVerificationCode" => {
+            Ok((i, Atom::PackageVerificationCode(key_value.1.to_string())))
+        }
+        "PackageChecksum" => Ok((i, Atom::PackageChecksum(key_value.1.to_string()))),
+        "PackageHomePage" => Ok((i, Atom::PackageHomePage(key_value.1.to_string()))),
+        "PackageSourceInfo" => Ok((i, Atom::PackageSourceInfo(key_value.1.to_string()))),
+        "PackageLicenseConcluded" => {
+            Ok((i, Atom::PackageLicenseConcluded(key_value.1.to_string())))
+        }
+        "PackageLicenseInfoFromFiles" => Ok((
+            i,
+            Atom::PackageLicenseInfoFromFiles(key_value.1.to_string()),
+        )),
+        "PackageLicenseDeclared" => Ok((i, Atom::PackageLicenseDeclared(key_value.1.to_string()))),
+        "PackageLicenseComments" => Ok((i, Atom::PackageLicenseComments(key_value.1.to_string()))),
+        "PackageCopyrightText" => Ok((i, Atom::PackageCopyrightText(key_value.1.to_string()))),
+        "PackageSummary" => Ok((i, Atom::PackageSummary(key_value.1.to_string()))),
+        "PackageDescription" => Ok((i, Atom::PackageDescription(key_value.1.to_string()))),
+        "PackageComment" => Ok((i, Atom::PackageComment(key_value.1.to_string()))),
+        "ExternalRef" => Ok((i, Atom::ExternalRef(key_value.1.to_string()))),
+        "ExternalRefComment" => Ok((i, Atom::ExternalRefComment(key_value.1.to_string()))),
+        "PackageAttributionText" => Ok((i, Atom::PackageAttributionText(key_value.1.to_string()))),
+
+        // File Information
+        "FileName" => Ok((i, Atom::FileName(key_value.1.to_string()))),
+        "FileType" => Ok((i, Atom::FileType(key_value.1.to_string()))),
+        "FileChecksum" => Ok((i, Atom::FileChecksum(key_value.1.to_string()))),
+        "LicenseConcluded" => Ok((i, Atom::LicenseConcluded(key_value.1.to_string()))),
+        "LicenseInfoInFile" => Ok((i, Atom::LicenseInfoInFile(key_value.1.to_string()))),
+        "LicenseComments" => Ok((i, Atom::LicenseComments(key_value.1.to_string()))),
+        "FileCopyrightText" => Ok((i, Atom::FileCopyrightText(key_value.1.to_string()))),
+        "FileComment" => Ok((i, Atom::FileComment(key_value.1.to_string()))),
+        "FileNotice" => Ok((i, Atom::FileNotice(key_value.1.to_string()))),
+        "FileContributor" => Ok((i, Atom::FileContributor(key_value.1.to_string()))),
+        "FileAttributionText" => Ok((i, Atom::FileAttributionText(key_value.1.to_string()))),
+
+        // Snippet Information
+        "SnippetSPDXID" => Ok((i, Atom::SnippetSPDXID(key_value.1.to_string()))),
+        "SnippetFromFileSPDXID" => Ok((i, Atom::SnippetFromFileSPDXID(key_value.1.to_string()))),
+        "SnippetByteRange" => Ok((i, Atom::SnippetByteRange(key_value.1.to_string()))),
+        "SnippetLineRange" => Ok((i, Atom::SnippetLineRange(key_value.1.to_string()))),
+        "SnippetLicenseConcluded" => {
+            Ok((i, Atom::SnippetLicenseConcluded(key_value.1.to_string())))
+        }
+        "LicenseInfoInSnippet" => Ok((i, Atom::LicenseInfoInSnippet(key_value.1.to_string()))),
+        "SnippetLicenseComments" => Ok((i, Atom::SnippetLicenseComments(key_value.1.to_string()))),
+        "SnippetCopyrightText" => Ok((i, Atom::SnippetCopyrightText(key_value.1.to_string()))),
+        "SnippetComment" => Ok((i, Atom::SnippetComment(key_value.1.to_string()))),
+        "SnippetName" => Ok((i, Atom::SnippetName(key_value.1.to_string()))),
+        "SnippetAttributionText" => Ok((i, Atom::SnippetAttributionText(key_value.1.to_string()))),
+
+        // Other Licensing Information Detected
+        "LicenseID" => Ok((i, Atom::LicenseID(key_value.1.to_string()))),
+        "ExtractedText" => Ok((i, Atom::ExtractedText(key_value.1.to_string()))),
+        "LicenseName" => Ok((i, Atom::LicenseName(key_value.1.to_string()))),
+        "LicenseCrossReference" => Ok((i, Atom::LicenseCrossReference(key_value.1.to_string()))),
+        "LicenseComment" => Ok((i, Atom::LicenseComment(key_value.1.to_string()))),
+
+        // Relationship
+        "Relationship" => Ok((i, Atom::Relationship(key_value.1.to_string()))),
+        "RelationshipComment" => Ok((i, Atom::RelationshipComment(key_value.1.to_string()))),
+
+        // Annotation
+        "Annotator" => Ok((i, Atom::Annotator(key_value.1.to_string()))),
+        "AnnotationDate" => Ok((i, Atom::AnnotationDate(key_value.1.to_string()))),
+        "AnnotationType" => Ok((i, Atom::AnnotationType(key_value.1.to_string()))),
+        "SPDXREF" => Ok((i, Atom::SPDXREF(key_value.1.to_string()))),
+        "AnnotationComment" => Ok((i, Atom::AnnotationComment(key_value.1.to_string()))),
+        v => {
+            dbg!(v);
+            unimplemented!()
+        }
+    }
+}
+
+fn external_document_reference(
+    i: &str,
+) -> IResult<&str, ExternalDocumentReference, VerboseError<&str>> {
+    map(
+        tuple((
+            document_ref,
+            ws(take_while(|c: char| !c.is_whitespace())),
+            ws(checksum),
+        )),
+        |reference| {
+            let checksum_algorithm = match reference.2 .0 {
+                "SHA1" => Algorithm::SHA1,
+                "SHA224" => Algorithm::SHA224,
+                "SHA256" => Algorithm::SHA256,
+                "SHA384" => Algorithm::SHA384,
+                "SHA512" => Algorithm::SHA512,
+                "MD2" => Algorithm::MD2,
+                "MD4" => Algorithm::MD4,
+                "MD5" => Algorithm::MD5,
+                "MD6" => Algorithm::MD6,
+                // TODO: Use proper error.
+                _ => todo!(),
+            };
+            let checksum = Checksum::new(checksum_algorithm, reference.2 .1);
+            ExternalDocumentReference::new(
+                reference.0.to_string(),
+                reference.1.to_string(),
+                checksum,
+            )
+        },
+    )(i)
+}
+
+fn document_ref<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
+    preceded(tag("DocumentRef-"), ws(idstring))(i)
+}
+
+fn idstring<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
+    take_while(|c: char| c.is_alphanum() || c == '.' || c == '-' || c == '+')(i)
+}
+
+fn checksum<'a>(i: &'a str) -> IResult<&'a str, (&str, &str), VerboseError<&'a str>> {
+    separated_pair(ws(take_until(":")), char(':'), ws(not_line_ending))(i)
+}
+
+fn tv_comment(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
+    map(preceded(ws(tag("#")), ws(not_line_ending)), |v| {
+        Atom::TVComment(v.to_string())
+    })(i)
+}
+
+fn tag_value<'a>(i: &'a str) -> IResult<&'a str, (&str, &str), VerboseError<&'a str>> {
+    separated_pair(
+        ws(alphanumeric0),
+        tag(":"),
+        alt((ws(multiline_text), ws(not_line_ending))),
+    )(i)
+}
+
+fn multiline_text<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
+    delimited(tag("<text>"), take_until("</text>"), tag("</text>"))(i)
+}
+
+/// A combinator that takes a parser `inner` and produces a parser that also consumes both leading and
+/// trailing whitespace, returning the output of `inner`.
+fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(
+    inner: F,
+) -> impl FnMut(&'a str) -> IResult<&'a str, O, E>
+where
+    F: Fn(&'a str) -> IResult<&'a str, O, E>,
+{
+    delimited(multispace0, inner, multispace0)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::read_to_string;
+
+    use crate::{
+        models::Algorithm,
+        parsers::tag_value::{checksum, document_ref, external_document_reference},
+    };
+
+    use super::{atoms, tag_value, tag_value_to_atom, Atom};
+
+    #[test]
+    fn version_can_be_parsed() {
+        let (_, value) = tag_value_to_atom("SPDXVersion: SPDX-1.2").unwrap();
+        assert_eq!(value, Atom::SpdxVersion("SPDX-1.2".to_string()));
+    }
+
+    #[test]
+    fn data_license_can_be_parsed() {
+        let (_, value) = tag_value_to_atom("DataLicense: CC0-1.0").unwrap();
+        assert_eq!(value, Atom::DataLicense("CC0-1.0".to_string()));
+    }
+
+    #[test]
+    fn external_document_reference_can_be_parsed() {
+        let (_, value) = external_document_reference("DocumentRef-spdx-tool-1.2 http://spdx.org/spdxdocs/spdx-tools-v1.2-3F2504E0-4F89-41D3-9A0C-0305E82C3301 SHA1: d6a770ba38583ed4bb4525bd96e50461655d2759").unwrap();
+        assert_eq!(value.id_string, "spdx-tool-1.2");
+        assert_eq!(
+            value.spdx_document_uri,
+            "http://spdx.org/spdxdocs/spdx-tools-v1.2-3F2504E0-4F89-41D3-9A0C-0305E82C3301"
+        );
+        assert_eq!(value.checksum.algorithm, Algorithm::SHA1);
+        assert_eq!(
+            value.checksum.value,
+            "d6a770ba38583ed4bb4525bd96e50461655d2759"
+        );
+    }
+
+    #[test]
+    fn document_ref_can_be_parsed() {
+        let (_, value) = document_ref("DocumentRef-spdx-tool-1.2").unwrap();
+        assert_eq!(value, "spdx-tool-1.2");
+    }
+
+    #[test]
+    fn checksum_can_be_parsed() {
+        let (_, value) = checksum("SHA1: d6a770ba38583ed4bb4525bd96e50461655d2759").unwrap();
+        assert_eq!(value.0, "SHA1");
+        assert_eq!(value.1, "d6a770ba38583ed4bb4525bd96e50461655d2759");
+    }
+
+    #[test]
+    fn document_comment_can_be_parsed() {
+        let (_, value) = tag_value_to_atom("DocumentComment: <text>Sample Comment</text>").unwrap();
+        assert_eq!(value, Atom::DocumentComment("Sample Comment".to_string()));
+    }
+
+    #[test]
+    fn multiline_document_comment_can_be_parsed() {
+        let (_, value) = tag_value_to_atom(
+            "DocumentComment: <text>Sample
+Comment</text>",
+        )
+        .unwrap();
+        assert_eq!(value, Atom::DocumentComment("Sample\nComment".to_string()));
+    }
+
+    #[test]
+    fn multiple_key_values_can_be_parsed() {
+        let input = "SPDXVersion: SPDX-1.2
+                    DataLicense: CC0-1.0
+                    DocumentComment: <text>Sample Comment</text>";
+
+        let (_, value) = atoms(input).unwrap();
+        assert_eq!(
+            value,
+            vec![
+                Atom::SpdxVersion("SPDX-1.2".to_string()),
+                Atom::DataLicense("CC0-1.0".to_string()),
+                Atom::DocumentComment("Sample Comment".to_string())
+            ]
+        );
+    }
+
+    #[test]
+    fn multiple_key_values_with_comment_can_be_parsed() {
+        let input = "SPDXVersion: SPDX-1.2
+                    # A comment
+                    DataLicense: CC0-1.0
+                    DocumentComment: <text>Sample Comment</text>";
+
+        let (_, value) = atoms(input).unwrap();
+        assert_eq!(
+            value,
+            vec![
+                Atom::SpdxVersion("SPDX-1.2".to_string()),
+                Atom::TVComment("A comment".to_string()),
+                Atom::DataLicense("CC0-1.0".to_string()),
+                Atom::DocumentComment("Sample Comment".to_string())
+            ]
+        );
+    }
+
+    #[test]
+    fn multiple_key_values_with_space_can_be_parsed() {
+        let input = "SPDXVersion: SPDX-1.2
+
+                    DataLicense: CC0-1.0
+                    DocumentComment: <text>Sample Comment</text>";
+
+        let (_, value) = atoms(input).unwrap();
+        assert_eq!(
+            value,
+            vec![
+                Atom::SpdxVersion("SPDX-1.2".to_string()),
+                Atom::DataLicense("CC0-1.0".to_string()),
+                Atom::DocumentComment("Sample Comment".to_string())
+            ]
+        );
+    }
+
+    #[test]
+    fn key_value_pair_is_detected() {
+        let (_, value) = tag_value("SPDXVersion: SPDX-1.2").unwrap();
+        assert_eq!(value, ("SPDXVersion", "SPDX-1.2"));
+    }
+
+    #[test]
+    fn get_tag_values_from_simple_example_file() {
+        let file = read_to_string("tests/data/SPDXSimpleTag.tag").unwrap();
+        let (remains, result) = atoms(&file).unwrap();
+        assert_eq!(remains.len(), 0);
+        assert!(result.contains(&Atom::SpdxVersion("SPDX-1.2".to_string())));
+        assert!(result.contains(&Atom::PackageName("Test".to_string())));
+        assert!(result.contains(&Atom::PackageDescription("A package.".to_string())));
+    }
+
+    #[test]
+    fn get_tag_values_from_example_file() {
+        let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
+        let (remains, result) = atoms(&file).unwrap();
+        assert_eq!(remains.len(), 0);
+        assert!(result.contains(&Atom::SpdxVersion("SPDX-2.2".to_string())));
+        assert!(result.contains(&Atom::LicenseListVersion("3.9".to_string())));
+        assert!(result.contains(&Atom::PackageLicenseDeclared("MPL-1.0".to_string())));
+    }
+}

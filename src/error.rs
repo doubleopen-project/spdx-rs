@@ -36,4 +36,13 @@ pub enum SpdxError {
         #[from]
         source: io::Error,
     },
+
+    #[error("Error while parsing date.")]
+    DateTimeParse {
+        #[from]
+        source: chrono::ParseError,
+    },
+
+    #[error("Error parsing tag-value: {0}")]
+    TagValueParse(String),
 }

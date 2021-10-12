@@ -104,7 +104,7 @@ impl Default for CreationInfo {
 }
 
 /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#26-external-document-references>
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct ExternalDocumentReference {
     /// Unique ID string of the reference.
     #[serde(rename = "externalDocumentId")]
@@ -117,6 +117,16 @@ pub struct ExternalDocumentReference {
     /// Checksum of the external document following the checksum format defined
     /// in <https://spdx.github.io/spdx-spec/4-file-information/#44-file-checksum.>
     pub checksum: Checksum,
+}
+
+impl ExternalDocumentReference {
+    pub const fn new(id_string: String, spdx_document_uri: String, checksum: Checksum) -> Self {
+        Self {
+            id_string,
+            spdx_document_uri,
+            checksum,
+        }
+    }
 }
 
 #[cfg(test)]
