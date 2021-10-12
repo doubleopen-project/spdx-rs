@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 HH Partners
+//
+// SPDX-License-Identifier: MIT
+
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while},

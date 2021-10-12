@@ -3,14 +3,22 @@ Upstream-Name: SPDX-rs
 Upstream-Contact: HH Partners <mikko.murto@hhpartners.fi>
 Source: https://github.com/doubleopen-project/spdx-rs
 
-Files: tests/data/*.spdx.json
+Files: tests/data/SPDXForGraph.spdx.json
 Copyright: HH Partners
 License: CC0-1.0
 
+Files: tests/data/SPDXJSONExample-v2.2.spdx.json
+Copyright: Linux Foundation and its Contributors
+License: CC-BY-3.0
+
 Files: tests/data/exceptions.json
-Copyright: HH Partners
+Copyright: Linux Foundation and its Contributors
 License: CC0-1.0
 
 Files: tests/data/licenses.json
-Copyright: HH Partners
+Copyright: Linux Foundation and its Contributors
+License: CC0-1.0
+
+Files: tests/data/SPDXSimpleTag.tag
+Copyright: Copyright (c) 2018 Yash M. Nisar
 License: CC0-1.0
