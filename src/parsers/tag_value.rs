@@ -15,7 +15,7 @@ use nom::{
 
 use crate::models::{
     Algorithm, Checksum, ExternalDocumentReference, ExternalPackageReference,
-    ExternalPackageReferenceCategory, PackageVerificationCode,
+    ExternalPackageReferenceCategory, FileType, PackageVerificationCode,
 };
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -60,8 +60,8 @@ pub(super) enum Atom {
 
     // File Information
     FileName(String),
-    FileType(String),
-    FileChecksum(String),
+    FileType(FileType),
+    FileChecksum(Checksum),
     LicenseConcluded(String),
     LicenseInfoInFile(String),
     LicenseComments(String),
@@ -168,8 +168,8 @@ fn tag_value_to_atom(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
 
         // File Information
         "FileName" => Ok((i, Atom::FileName(key_value.1.to_string()))),
-        "FileType" => Ok((i, Atom::FileType(key_value.1.to_string()))),
-        "FileChecksum" => Ok((i, Atom::FileChecksum(key_value.1.to_string()))),
+        "FileType" => Ok((i, Atom::FileType(file_type(key_value.1)?.1))),
+        "FileChecksum" => Ok((i, Atom::FileChecksum(checksum(key_value.1)?.1))),
         "LicenseConcluded" => Ok((i, Atom::LicenseConcluded(key_value.1.to_string()))),
         "LicenseInfoInFile" => Ok((i, Atom::LicenseInfoInFile(key_value.1.to_string()))),
         "LicenseComments" => Ok((i, Atom::LicenseComments(key_value.1.to_string()))),
@@ -235,6 +235,27 @@ fn external_document_reference(
             )
         },
     )(i)
+}
+
+fn file_type(i: &str) -> IResult<&str, FileType, VerboseError<&str>> {
+    match ws(not_line_ending)(i) {
+        Ok((i, value)) => match value {
+            "SOURCE" => Ok((i, FileType::Source)),
+            "BINARY" => Ok((i, FileType::Binary)),
+            "ARCHIVE" => Ok((i, FileType::Archive)),
+            "APPLICATION" => Ok((i, FileType::Application)),
+            "AUDIO" => Ok((i, FileType::Audio)),
+            "IMAGE" => Ok((i, FileType::Image)),
+            "TEXT" => Ok((i, FileType::Text)),
+            "VIDEO" => Ok((i, FileType::Video)),
+            "DOCUMENTATION" => Ok((i, FileType::Documentation)),
+            "SPDX" => Ok((i, FileType::SPDX)),
+            "OTHER" => Ok((i, FileType::Other)),
+            // Proper error
+            _ => todo!(),
+        },
+        Err(err) => Err(err),
+    }
 }
 
 fn document_ref<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {

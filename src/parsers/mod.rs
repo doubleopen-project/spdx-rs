@@ -7,8 +7,8 @@ use chrono::{DateTime, Utc};
 use crate::{
     error::SpdxError,
     models::{
-        DocumentCreationInformation, ExternalPackageReference, PackageInformation, SPDXExpression,
-        SPDX,
+        DocumentCreationInformation, ExternalPackageReference, FileInformation, PackageInformation,
+        SPDXExpression, SPDX,
     },
     parsers::tag_value::{atoms, Atom},
 };
@@ -25,6 +25,7 @@ pub fn spdx_from_tag_value(input: &str) -> Result<SPDX, SpdxError> {
     let mut spdx = SPDX::new("SPDX from TV");
     spdx.document_creation_information = document_creation_information_from_atoms(&atoms)?;
     spdx.package_information = packages_from_atoms(&atoms)?;
+    spdx.file_information = files_from_atoms(&atoms)?;
 
     Ok(spdx)
 }
@@ -229,6 +230,85 @@ fn packages_from_atoms(atoms: &[Atom]) -> Result<Vec<PackageInformation>, SpdxEr
 
     Ok(packages)
 }
+
+fn files_from_atoms(atoms: &[Atom]) -> Result<Vec<FileInformation>, SpdxError> {
+    let mut files = Vec::new();
+    let mut file_in_progress: Option<FileInformation> = None;
+
+    for atom in atoms {
+        match atom {
+            Atom::FileName(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    files.push(file.clone());
+                }
+                file_in_progress = Some(FileInformation::default());
+
+                if let Some(file) = &mut file_in_progress {
+                    file.file_name = value.to_string();
+                }
+            }
+            Atom::SPDXID(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.file_spdx_identifier = value.to_string();
+                }
+            }
+            Atom::FileComment(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.file_comment = Some(value.to_string());
+                }
+            }
+            Atom::FileType(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.file_type.push(*value);
+                }
+            }
+            Atom::FileChecksum(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.file_checksum.push(value.clone());
+                }
+            }
+            Atom::LicenseConcluded(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.concluded_license = SPDXExpression::parse(value)?;
+                }
+            }
+            Atom::LicenseInfoInFile(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.license_information_in_file.push(value.clone());
+                }
+            }
+            Atom::LicenseComments(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.comments_on_license = Some(value.clone());
+                }
+            }
+            Atom::FileCopyrightText(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.copyright_text = value.clone();
+                }
+            }
+            Atom::FileNotice(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.file_notice = Some(value.clone());
+                }
+            }
+            Atom::FileContributor(value) => {
+                if let Some(file) = &mut file_in_progress {
+                    file.file_contributor.push(value.clone());
+                }
+            }
+            Atom::TVComment(_) => continue,
+            _ => {
+                if let Some(file) = &mut file_in_progress {
+                    files.push(file.clone());
+                    file_in_progress = None;
+                }
+            }
+        }
+    }
+
+    Ok(files)
+}
 #[cfg(test)]
 #[allow(clippy::too_many_lines)]
 mod test_super {
@@ -237,10 +317,18 @@ mod test_super {
     use chrono::TimeZone;
 
     use crate::models::{
-        Algorithm, Checksum, ExternalDocumentReference, ExternalPackageReferenceCategory,
+        Algorithm, Checksum, ExternalDocumentReference, ExternalPackageReferenceCategory, FileType,
     };
 
     use super::*;
+
+    #[test]
+    fn whole_spdx_is_parsed() {
+        let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+        assert_eq!(spdx.package_information.len(), 4);
+        assert_eq!(spdx.file_information.len(), 4);
+    }
 
     #[test]
     fn spdx_creation_info_is_retrieved() {
@@ -429,5 +517,71 @@ compatible system run time libraries."
                 None
             ),]
         );
+    }
+
+    #[test]
+    fn file_info_is_retrieved() {
+        let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
+        let (_, atoms) = atoms(&file).unwrap();
+        let files = files_from_atoms(&atoms).unwrap();
+        assert_eq!(files.len(), 4);
+
+        let fooc = files
+            .iter()
+            .find(|p| p.file_name == "./package/foo.c")
+            .unwrap();
+        assert_eq!(fooc.file_spdx_identifier, "SPDXRef-File");
+        assert_eq!(fooc.file_comment, Some("The concluded license was taken from the package level that the file was included in.
+This information was found in the COPYING.txt file in the xyz directory.".to_string()));
+        assert_eq!(fooc.file_type, vec![FileType::Source]);
+        assert_eq!(
+            fooc.file_checksum,
+            vec![
+                Checksum::new(Algorithm::SHA1, "d6a770ba38583ed4bb4525bd96e50461655d2758"),
+                Checksum::new(Algorithm::MD5, "624c1abb3664f4b35547e7c73864ad24")
+            ]
+        );
+        assert_eq!(
+            fooc.concluded_license
+                .requirements()
+                .map(|er| er.req.license.id())
+                .collect::<Vec<_>>(),
+            vec![
+                spdx::license_id("LGPL-2.0"),
+                spdx::license_id("LicenseRef-2"),
+            ]
+        );
+        assert_eq!(
+            fooc.license_information_in_file,
+            vec!["GPL-2.0-only".to_string(), "LicenseRef-2".to_string()]
+        );
+        assert_eq!(fooc.comments_on_license, Some("The concluded license was taken from the package level that the file was included in.".to_string()));
+        assert_eq!(
+            fooc.copyright_text,
+            "Copyright 2008-2010 John Smith".to_string()
+        );
+        assert_eq!(
+            fooc.file_notice,
+            Some("Copyright (c) 2001 Aaron Lehmann aaroni@vitelus.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the �Software�), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: 
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.".to_string())
+        );
+        assert_eq!(
+            fooc.file_contributor,
+            vec![
+                "The Regents of the University of California".to_string(),
+                "Modified by Paul Mundt lethal@linux-sh.org".to_string(),
+                "IBM Corporation".to_string(),
+            ]
+        );
+        let doap = files
+            .iter()
+            .find(|p| p.file_name == "./src/org/spdx/parser/DOAPProject.java")
+            .unwrap();
+
+        assert_eq!(doap.file_spdx_identifier, "SPDXRef-DoapSource");
     }
 }
