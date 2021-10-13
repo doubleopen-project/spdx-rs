@@ -17,12 +17,30 @@ use super::{
     OtherLicensingInformationDetected, PackageInformation, Relationship, RelationshipType, Snippet,
 };
 
-/// # SPDX 2.2
+/// A representation of an [SPDX Document]
 ///
-/// Store information about files in SPDX files. Latest spec
-/// is currently 2.2. Can be serialized to JSON.  
-///     
-/// Spec: <https://spdx.github.io/spdx-spec/>
+/// This is the main struct of this crate. The struct implements [`Serialize`] and [`Deserialize`]
+/// to allow it to be serialized into and deserialized from any data format supported by [Serde].
+///
+/// # SPDX specification version
+///
+/// The crate has been developed around SPDX version 2.2.1. Fields deprecated in 2.2.1, like
+/// [review information] are not supported. The plan is to support newer versions as they are
+/// released.
+///
+/// # Data formats
+///
+/// The crate has been developed for usage with JSON SPDX documents. The naming of the fields should
+/// conform to the spec for at least JSON. Other formats, like YAML may work, but no guarantees are
+/// made.
+///
+/// The crate also allows for deserializing the struct from SPDX documents in [tag-value format]
+/// with [`crate::parsers::spdx_from_tag_value`].
+///
+/// [SPDX Document]: https://spdx.github.io/spdx-spec/composition-of-an-SPDX-document/
+/// [Serde]: https://serde.rs
+/// [review information]: https://spdx.github.io/spdx-spec/review-information-deprecated/
+/// [tag-value format]: https://spdx.github.io/spdx-spec/conformance/
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SPDX {

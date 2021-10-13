@@ -2,6 +2,29 @@
 //
 // SPDX-License-Identifier: MIT
 
+//! Parsers for deserializing [`SPDX`] from different data formats.
+//!
+//! The SPDX spec supports some data formats that are not supported by [Serde], so parsing from JSON
+//! (and YAML) is achieved with the data format specific crates:
+//!
+//! ```rust
+//! # use spdx_rs::error::SpdxError;
+//! use spdx_rs::models::SPDX;
+//! # fn main() -> Result<(), SpdxError> {
+//!
+//! let spdx_file = std::fs::read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json")?;
+//! let spdx_document: SPDX = serde_json::from_str(&spdx_file)?;
+//!
+//! assert_eq!(
+//!     spdx_document.document_creation_information.document_name,
+//!     "SPDX-Tools-v2.0"
+//! );
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! [Serde]: https://serde.rs
+
 use std::collections::HashSet;
 
 use chrono::{DateTime, Utc};
@@ -18,6 +41,26 @@ use crate::{
 
 mod tag_value;
 
+/// Parse a tag-value SPDX document to [`SPDX`].
+///
+/// # Usage
+///
+/// ```
+/// # use spdx_rs::error::SpdxError;
+/// use spdx_rs::parsers::spdx_from_tag_value;
+/// # fn main() -> Result<(), SpdxError> {
+///
+/// let spdx_file = std::fs::read_to_string("tests/data/SPDXTagExample-v2.2.spdx")?;
+/// let spdx_document = spdx_from_tag_value(&spdx_file)?;
+///
+/// assert_eq!(
+///     spdx_document.document_creation_information.document_name,
+///     "SPDX-Tools-v2.0"
+/// );
+/// # Ok(())
+/// # }
+/// ```
+///
 /// # Errors
 ///
 /// - If parsing of the tag-value fails.

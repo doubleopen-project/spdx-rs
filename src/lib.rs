@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+#![doc = include_str!("../README.md")]
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![allow(
     clippy::must_use_candidate,
