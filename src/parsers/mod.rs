@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MIT
 
+use std::collections::HashSet;
+
 use chrono::{DateTime, Utc};
 
 use crate::{
@@ -48,7 +50,7 @@ fn spdx_from_atoms(atoms: &[Atom]) -> Result<SPDX, SpdxError> {
     let mut snippet_information: Vec<Snippet> = Vec::new();
     let mut snippet_in_progress: Option<Snippet> = None;
 
-    let mut relationships: Vec<Relationship> = Vec::new();
+    let mut relationships: HashSet<Relationship> = HashSet::new();
     let mut relationship_in_progress: Option<Relationship> = None;
 
     let mut annotations: Vec<Annotation> = Vec::new();
@@ -69,7 +71,13 @@ fn spdx_from_atoms(atoms: &[Atom]) -> Result<SPDX, SpdxError> {
             &mut package_in_progress,
             &mut external_package_ref_in_progress,
         )?;
-        process_atom_for_files(atom, &mut file_in_progress, &mut file_information)?;
+        process_atom_for_files(
+            atom,
+            &mut file_in_progress,
+            &mut file_information,
+            &package_in_progress,
+            &mut relationships,
+        )?;
         process_atom_for_snippets(atom, &mut snippet_information, &mut snippet_in_progress)?;
         process_atom_for_relationships(atom, &mut relationships, &mut relationship_in_progress)?;
         process_atom_for_annotations(atom, &mut annotations, &mut annotation_in_progress)?;
@@ -91,7 +99,7 @@ fn spdx_from_atoms(atoms: &[Atom]) -> Result<SPDX, SpdxError> {
     }
 
     if let Some(relationship) = relationship_in_progress {
-        relationships.push(relationship);
+        relationships.insert(relationship);
     }
 
     if let Some(license_info) = license_info_in_progress {
@@ -108,7 +116,7 @@ fn spdx_from_atoms(atoms: &[Atom]) -> Result<SPDX, SpdxError> {
         other_licensing_information_detected,
         file_information,
         snippet_information,
-        relationships,
+        relationships: relationships.into_iter().collect(),
         annotations,
         // TODO: This should probably be removed.
         spdx_ref_counter: 0,
@@ -357,6 +365,8 @@ fn process_atom_for_files(
     atom: &Atom,
     mut file_in_progress: &mut Option<FileInformation>,
     files: &mut Vec<FileInformation>,
+    package_in_progress: &Option<PackageInformation>,
+    relationships: &mut HashSet<Relationship>,
 ) -> Result<(), SpdxError> {
     match atom {
         Atom::PackageName(_) => {
@@ -378,6 +388,14 @@ fn process_atom_for_files(
         Atom::SPDXID(value) => {
             if let Some(file) = &mut file_in_progress {
                 file.file_spdx_identifier = value.to_string();
+                if let Some(package) = package_in_progress {
+                    relationships.insert(Relationship::new(
+                        &package.package_spdx_identifier,
+                        value,
+                        crate::models::RelationshipType::Contains,
+                        None,
+                    ));
+                }
             }
         }
         Atom::FileComment(value) => {
@@ -512,13 +530,13 @@ fn process_atom_for_snippets(
 #[allow(clippy::unnecessary_wraps)]
 fn process_atom_for_relationships(
     atom: &Atom,
-    relationships: &mut Vec<Relationship>,
+    relationships: &mut HashSet<Relationship>,
     mut relationship_in_progress: &mut Option<Relationship>,
 ) -> Result<(), SpdxError> {
     match atom {
         Atom::Relationship(value) => {
             if let Some(relationship) = relationship_in_progress {
-                relationships.push(relationship.clone());
+                relationships.insert(relationship.clone());
             }
             *relationship_in_progress = Some(value.clone());
         }
@@ -971,26 +989,28 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
         let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
         let spdx = spdx_from_tag_value(&file).unwrap();
         let relationships = spdx.relationships;
-        assert_eq!(relationships.len(), 9);
+        assert_eq!(relationships.len(), 11);
 
-        assert_eq!(
-            relationships[0],
-            Relationship::new(
-                "SPDXRef-DOCUMENT",
-                "SPDXRef-Package",
-                crate::models::RelationshipType::Contains,
-                None
-            )
-        );
-        assert_eq!(
-            relationships[7],
-            Relationship::new(
-                "SPDXRef-CommonsLangSrc",
-                "NOASSERTION",
-                crate::models::RelationshipType::GeneratedFrom,
-                None
-            )
-        );
+        assert!(relationships.contains(&Relationship::new(
+            "SPDXRef-DOCUMENT",
+            "SPDXRef-Package",
+            crate::models::RelationshipType::Contains,
+            None
+        )));
+        assert!(relationships.contains(&Relationship::new(
+            "SPDXRef-CommonsLangSrc",
+            "NOASSERTION",
+            crate::models::RelationshipType::GeneratedFrom,
+            None
+        )));
+
+        // Implied relationship by the file following the package in tag-value.
+        assert!(relationships.contains(&Relationship::new(
+            "SPDXRef-Package",
+            "SPDXRef-DoapSource",
+            crate::models::RelationshipType::Contains,
+            None
+        )));
     }
 
     #[test]
@@ -1047,7 +1067,7 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
         assert_eq!(spdx.package_information.len(), 4);
         assert_eq!(spdx.file_information.len(), 4);
         assert_eq!(spdx.snippet_information.len(), 1);
-        assert_eq!(spdx.relationships.len(), 9);
+        assert_eq!(spdx.relationships.len(), 11);
         assert_eq!(spdx.annotations.len(), 5);
         assert_eq!(spdx.other_licensing_information_detected.len(), 5);
     }
