@@ -965,4 +965,17 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
             .extracted_text
             .ends_with("Poul-Henning Kamp"));
     }
+
+    #[test]
+    fn tag_value_is_parsed() {
+        let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+
+        assert_eq!(spdx.package_information.len(), 4);
+        assert_eq!(spdx.file_information.len(), 4);
+        assert_eq!(spdx.snippet_information.len(), 1);
+        assert_eq!(spdx.relationships.len(), 9);
+        assert_eq!(spdx.annotations.len(), 5);
+        assert_eq!(spdx.other_licensing_information_detected.len(), 5);
+    }
 }
