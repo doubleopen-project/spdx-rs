@@ -7,8 +7,9 @@ use chrono::{DateTime, Utc};
 use crate::{
     error::SpdxError,
     models::{
-        DocumentCreationInformation, EndPointer, ExternalPackageReference, FileInformation,
-        PackageInformation, Range, Relationship, SPDXExpression, Snippet, StartPointer, SPDX,
+        Annotation, AnnotationType, DocumentCreationInformation, EndPointer,
+        ExternalPackageReference, FileInformation, PackageInformation, Range, Relationship,
+        SPDXExpression, Snippet, StartPointer, SPDX,
     },
     parsers::tag_value::{atoms, Atom},
 };
@@ -28,6 +29,7 @@ pub fn spdx_from_tag_value(input: &str) -> Result<SPDX, SpdxError> {
     spdx.file_information = files_from_atoms(&atoms)?;
     spdx.snippet_information = snippets_from_atoms(&atoms)?;
     spdx.relationships = relationships_from_atoms(&atoms)?;
+    spdx.annotations = annotations_from_atoms(&atoms)?;
 
     Ok(spdx)
 }
@@ -438,6 +440,82 @@ fn relationships_from_atoms(atoms: &[Atom]) -> Result<Vec<Relationship>, SpdxErr
     Ok(relationships)
 }
 
+#[allow(clippy::unnecessary_wraps)]
+fn annotations_from_atoms(atoms: &[Atom]) -> Result<Vec<Annotation>, SpdxError> {
+    let mut annotations = Vec::new();
+
+    let mut annotator_in_progress: Option<String> = None;
+    let mut date_in_progress: Option<DateTime<Utc>> = None;
+    let mut comment_in_progress: Option<String> = None;
+    let mut type_in_progress: Option<AnnotationType> = None;
+    let mut spdxref_in_progress: Option<String> = None;
+
+    let mut process_annotation =
+        |mut annotator_in_progress: &mut Option<String>,
+         mut date_in_progress: &mut Option<DateTime<Utc>>,
+         mut comment_in_progress: &mut Option<String>,
+         mut type_in_progress: &mut Option<AnnotationType>,
+         mut spdxref_in_progress: &mut Option<String>| {
+            if let (
+                Some(annotator),
+                Some(date),
+                Some(comment),
+                Some(annotation_type),
+                Some(spdxref),
+            ) = (
+                &mut annotator_in_progress,
+                &mut date_in_progress,
+                &mut comment_in_progress,
+                &mut type_in_progress,
+                &mut spdxref_in_progress,
+            ) {
+                let annotation = Annotation::new(
+                    annotator.clone(),
+                    *date,
+                    *annotation_type,
+                    Some(spdxref.clone()),
+                    comment.clone(),
+                );
+                *annotator_in_progress = None;
+                *date_in_progress = None;
+                *comment_in_progress = None;
+                *type_in_progress = None;
+                *spdxref_in_progress = None;
+                annotations.push(annotation);
+            }
+        };
+
+    for atom in atoms {
+        match atom {
+            Atom::Annotator(value) => {
+                annotator_in_progress = Some(value.clone());
+            }
+            Atom::AnnotationDate(value) => {
+                date_in_progress = Some(DateTime::parse_from_rfc3339(value)?.with_timezone(&Utc));
+            }
+            Atom::AnnotationComment(value) => {
+                comment_in_progress = Some(value.clone());
+            }
+            Atom::AnnotationType(value) => {
+                type_in_progress = Some(*value);
+            }
+            Atom::SPDXREF(value) => {
+                spdxref_in_progress = Some(value.clone());
+            }
+            _ => {}
+        }
+        process_annotation(
+            &mut annotator_in_progress,
+            &mut date_in_progress,
+            &mut comment_in_progress,
+            &mut type_in_progress,
+            &mut spdxref_in_progress,
+        );
+    }
+
+    Ok(annotations)
+}
+
 #[cfg(test)]
 #[allow(clippy::too_many_lines)]
 mod test_super {
@@ -782,6 +860,25 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
                 "NOASSERTION",
                 crate::models::RelationshipType::GeneratedFrom,
                 None
+            )
+        );
+    }
+
+    #[test]
+    fn annotations_are_retrieved() {
+        let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
+        let (_, atoms) = atoms(&file).unwrap();
+        let annotations = annotations_from_atoms(&atoms).unwrap();
+        assert_eq!(annotations.len(), 5);
+
+        assert_eq!(
+            annotations[2],
+            Annotation::new(
+                "Person: Suzanne Reviewer".to_string(),
+                Utc.ymd(2011, 3, 13).and_hms(0, 0, 0),
+                AnnotationType::Review,
+                Some("SPDXRef-DOCUMENT".to_string()),
+                "Another example reviewer.".to_string()
             )
         );
     }

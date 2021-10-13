@@ -28,8 +28,26 @@ pub struct Annotation {
     pub annotation_comment: String,
 }
 
+impl Annotation {
+    pub fn new(
+        annotator: String,
+        annotation_date: DateTime<Utc>,
+        annotation_type: AnnotationType,
+        spdx_identifier_reference: Option<String>,
+        annotation_comment: String,
+    ) -> Self {
+        Self {
+            annotator,
+            annotation_date,
+            annotation_type,
+            spdx_identifier_reference,
+            annotation_comment,
+        }
+    }
+}
+
 /// <https://spdx.github.io/spdx-spec/8-annotations/#83-annotation-type>
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AnnotationType {
     Review,

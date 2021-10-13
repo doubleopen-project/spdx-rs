@@ -16,7 +16,7 @@ use nom::{
 };
 
 use crate::models::{
-    Algorithm, Checksum, ExternalDocumentReference, ExternalPackageReference,
+    Algorithm, AnnotationType, Checksum, ExternalDocumentReference, ExternalPackageReference,
     ExternalPackageReferenceCategory, FileType, PackageVerificationCode, Relationship,
     RelationshipType,
 };
@@ -101,7 +101,7 @@ pub(super) enum Atom {
     // Annotation
     Annotator(String),
     AnnotationDate(String),
-    AnnotationType(String),
+    AnnotationType(AnnotationType),
     SPDXREF(String),
     AnnotationComment(String),
 
@@ -211,7 +211,7 @@ fn tag_value_to_atom(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
         // Annotation
         "Annotator" => Ok((i, Atom::Annotator(key_value.1.to_string()))),
         "AnnotationDate" => Ok((i, Atom::AnnotationDate(key_value.1.to_string()))),
-        "AnnotationType" => Ok((i, Atom::AnnotationType(key_value.1.to_string()))),
+        "AnnotationType" => Ok((i, Atom::AnnotationType(annotation_type(key_value.1)?.1))),
         "SPDXREF" => Ok((i, Atom::SPDXREF(key_value.1.to_string()))),
         "AnnotationComment" => Ok((i, Atom::AnnotationComment(key_value.1.to_string()))),
         v => {
@@ -238,6 +238,18 @@ fn external_document_reference(
             )
         },
     )(i)
+}
+
+fn annotation_type(i: &str) -> IResult<&str, AnnotationType, VerboseError<&str>> {
+    match ws(not_line_ending)(i) {
+        Ok((i, value)) => match value {
+            "REVIEW" => Ok((i, AnnotationType::Review)),
+            "OTHER" => Ok((i, AnnotationType::Other)),
+            // Proper error
+            _ => todo!(),
+        },
+        Err(err) => Err(err),
+    }
 }
 
 fn file_type(i: &str) -> IResult<&str, FileType, VerboseError<&str>> {
@@ -441,10 +453,10 @@ mod tests {
     use std::fs::read_to_string;
 
     use crate::{
-        models::{Algorithm, ExternalPackageReferenceCategory, Relationship},
+        models::{Algorithm, AnnotationType, ExternalPackageReferenceCategory, Relationship},
         parsers::tag_value::{
-            checksum, document_ref, external_document_reference, external_package_reference,
-            package_verification_code, range, relationship,
+            annotation_type, checksum, document_ref, external_document_reference,
+            external_package_reference, package_verification_code, range, relationship,
         },
     };
 
@@ -460,6 +472,14 @@ mod tests {
     fn range_can_be_parsed() {
         let (_, value) = range("310:420").unwrap();
         assert_eq!(value, (310, 420));
+    }
+
+    #[test]
+    fn annotation_type_can_be_parsed() {
+        let (_, value) = annotation_type("REVIEW").unwrap();
+        assert_eq!(value, AnnotationType::Review);
+        let (_, value) = annotation_type("OTHER").unwrap();
+        assert_eq!(value, AnnotationType::Other);
     }
 
     #[test]
