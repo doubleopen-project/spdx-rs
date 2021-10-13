@@ -16,6 +16,12 @@ use crate::error::SpdxError;
 #[derive(PartialEq, Debug, Clone)]
 pub struct SPDXExpression(Expression);
 
+impl Default for SPDXExpression {
+    fn default() -> Self {
+        Self(Expression::parse("NOASSERTION").expect("This will always succeed."))
+    }
+}
+
 impl SPDXExpression {
     /// # Errors
     ///

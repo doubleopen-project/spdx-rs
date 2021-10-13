@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use super::SPDXExpression;
 
 /// <https://spdx.github.io/spdx-spec/5-snippet-information/>
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
 pub struct Snippet {
     /// <https://spdx.github.io/spdx-spec/5-snippet-information/#51-snippet-spdx-identifier>
     #[serde(rename = "SPDXID")]
@@ -62,15 +62,24 @@ pub struct Snippet {
 }
 
 /// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Range {
     pub start_pointer: StartPointer,
     pub end_pointer: EndPointer,
 }
 
+impl Range {
+    pub fn new(start_pointer: StartPointer, end_pointer: EndPointer) -> Self {
+        Self {
+            start_pointer,
+            end_pointer,
+        }
+    }
+}
+
 /// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct StartPointer {
     pub reference: Option<String>,
@@ -78,13 +87,33 @@ pub struct StartPointer {
     pub line_number: Option<i32>,
 }
 
+impl StartPointer {
+    pub fn new(reference: Option<String>, offset: Option<i32>, line_number: Option<i32>) -> Self {
+        Self {
+            reference,
+            offset,
+            line_number,
+        }
+    }
+}
+
 /// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EndPointer {
     pub reference: Option<String>,
     pub offset: Option<i32>,
     pub line_number: Option<i32>,
+}
+
+impl EndPointer {
+    pub fn new(reference: Option<String>, offset: Option<i32>, line_number: Option<i32>) -> Self {
+        Self {
+            reference,
+            offset,
+            line_number,
+        }
+    }
 }
 
 #[cfg(test)]

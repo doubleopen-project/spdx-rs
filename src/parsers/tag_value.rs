@@ -2,11 +2,13 @@
 //
 // SPDX-License-Identifier: MIT
 
+use std::{num::ParseIntError, str::FromStr};
+
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until, take_while},
-    character::complete::{alphanumeric0, char, multispace0, not_line_ending},
-    combinator::{map, opt},
+    character::complete::{alphanumeric0, char, digit1, multispace0, not_line_ending},
+    combinator::{map, map_res, opt},
     error::{ParseError, VerboseError},
     multi::many0,
     sequence::{delimited, preceded, separated_pair, tuple},
@@ -74,8 +76,8 @@ pub(super) enum Atom {
     // Snippet Information
     SnippetSPDXID(String),
     SnippetFromFileSPDXID(String),
-    SnippetByteRange(String),
-    SnippetLineRange(String),
+    SnippetByteRange((i32, i32)),
+    SnippetLineRange((i32, i32)),
     SnippetLicenseConcluded(String),
     LicenseInfoInSnippet(String),
     SnippetLicenseComments(String),
@@ -182,8 +184,8 @@ fn tag_value_to_atom(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
         // Snippet Information
         "SnippetSPDXID" => Ok((i, Atom::SnippetSPDXID(key_value.1.to_string()))),
         "SnippetFromFileSPDXID" => Ok((i, Atom::SnippetFromFileSPDXID(key_value.1.to_string()))),
-        "SnippetByteRange" => Ok((i, Atom::SnippetByteRange(key_value.1.to_string()))),
-        "SnippetLineRange" => Ok((i, Atom::SnippetLineRange(key_value.1.to_string()))),
+        "SnippetByteRange" => Ok((i, Atom::SnippetByteRange(range(key_value.1)?.1))),
+        "SnippetLineRange" => Ok((i, Atom::SnippetLineRange(range(key_value.1)?.1))),
         "SnippetLicenseConcluded" => {
             Ok((i, Atom::SnippetLicenseConcluded(key_value.1.to_string())))
         }
@@ -308,6 +310,13 @@ fn package_verification_code(
     )(i)
 }
 
+fn range(i: &str) -> IResult<&str, (i32, i32), VerboseError<&str>> {
+    map_res::<_, _, _, _, ParseIntError, _, _>(
+        separated_pair(digit1, char(':'), digit1),
+        |(left, right)| Ok((i32::from_str(left)?, i32::from_str(right)?)),
+    )(i)
+}
+
 fn idstring<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
     take_while(|c: char| c.is_alphanum() || c == '.' || c == '-' || c == '+')(i)
 }
@@ -371,7 +380,7 @@ mod tests {
         models::{Algorithm, ExternalPackageReferenceCategory},
         parsers::tag_value::{
             checksum, document_ref, external_document_reference, external_package_reference,
-            package_verification_code,
+            package_verification_code, range,
         },
     };
 
@@ -381,6 +390,12 @@ mod tests {
     fn version_can_be_parsed() {
         let (_, value) = tag_value_to_atom("SPDXVersion: SPDX-1.2").unwrap();
         assert_eq!(value, Atom::SpdxVersion("SPDX-1.2".to_string()));
+    }
+
+    #[test]
+    fn range_can_be_parsed() {
+        let (_, value) = range("310:420").unwrap();
+        assert_eq!(value, (310, 420));
     }
 
     #[test]

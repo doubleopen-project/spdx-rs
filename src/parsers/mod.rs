@@ -7,8 +7,8 @@ use chrono::{DateTime, Utc};
 use crate::{
     error::SpdxError,
     models::{
-        DocumentCreationInformation, ExternalPackageReference, FileInformation, PackageInformation,
-        SPDXExpression, SPDX,
+        DocumentCreationInformation, EndPointer, ExternalPackageReference, FileInformation,
+        PackageInformation, Range, SPDXExpression, Snippet, StartPointer, SPDX,
     },
     parsers::tag_value::{atoms, Atom},
 };
@@ -26,6 +26,7 @@ pub fn spdx_from_tag_value(input: &str) -> Result<SPDX, SpdxError> {
     spdx.document_creation_information = document_creation_information_from_atoms(&atoms)?;
     spdx.package_information = packages_from_atoms(&atoms)?;
     spdx.file_information = files_from_atoms(&atoms)?;
+    spdx.snippet_information = snippets_from_atoms(&atoms)?;
 
     Ok(spdx)
 }
@@ -307,7 +308,102 @@ fn files_from_atoms(atoms: &[Atom]) -> Result<Vec<FileInformation>, SpdxError> {
         }
     }
 
+    if let Some(file) = &mut file_in_progress {
+        files.push(file.clone());
+    }
+
     Ok(files)
+}
+
+fn snippets_from_atoms(atoms: &[Atom]) -> Result<Vec<Snippet>, SpdxError> {
+    let mut snippets = Vec::new();
+    let mut snippet_in_progress: Option<Snippet> = None;
+
+    for atom in atoms {
+        match atom {
+            Atom::SnippetSPDXID(value) => {
+                if let Some(snippet) = &snippet_in_progress {
+                    snippets.push(snippet.clone());
+                }
+
+                snippet_in_progress = Some(Snippet::default());
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet.snippet_spdx_identifier = value.to_string();
+                }
+            }
+            Atom::SnippetFromFileSPDXID(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet.snippet_from_file_spdx_identifier = value.to_string();
+                }
+            }
+            Atom::SnippetByteRange(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    let start_pointer = StartPointer::new(None, Some(value.0), None);
+                    let end_pointer = EndPointer::new(None, Some(value.1), None);
+                    let range = Range::new(start_pointer, end_pointer);
+                    snippet.ranges.push(range);
+                }
+            }
+            Atom::SnippetLineRange(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    let start_pointer = StartPointer::new(None, None, Some(value.0));
+                    let end_pointer = EndPointer::new(None, None, Some(value.1));
+                    let range = Range::new(start_pointer, end_pointer);
+                    snippet.ranges.push(range);
+                }
+            }
+            Atom::SnippetLicenseConcluded(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet.snippet_concluded_license = SPDXExpression::parse(value)?;
+                }
+            }
+            Atom::LicenseInfoInSnippet(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet
+                        .license_information_in_snippet
+                        .push(value.to_string());
+                }
+            }
+            Atom::SnippetLicenseComments(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet.snippet_comments_on_license = Some(value.to_string());
+                }
+            }
+            Atom::SnippetCopyrightText(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet.snippet_copyright_text = value.to_string();
+                }
+            }
+            Atom::SnippetComment(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet.snippet_comment = Some(value.to_string());
+                }
+            }
+            Atom::SnippetName(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet.snippet_name = Some(value.to_string());
+                }
+            }
+            Atom::SnippetAttributionText(value) => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippet.snippet_attribution_text = Some(value.to_string());
+                }
+            }
+            Atom::TVComment(_) => continue,
+            _ => {
+                if let Some(snippet) = &mut snippet_in_progress {
+                    snippets.push(snippet.clone());
+                    snippet_in_progress = None;
+                }
+            }
+        }
+    }
+
+    if let Some(snippet) = &mut snippet_in_progress {
+        snippets.push(snippet.clone());
+    }
+
+    Ok(snippets)
 }
 #[cfg(test)]
 #[allow(clippy::too_many_lines)]
@@ -583,5 +679,50 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
             .unwrap();
 
         assert_eq!(doap.file_spdx_identifier, "SPDXRef-DoapSource");
+    }
+
+    #[test]
+    fn snippet_info_is_retrieved() {
+        let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
+        let (_, atoms) = atoms(&file).unwrap();
+        let snippets = snippets_from_atoms(&atoms).unwrap();
+        assert_eq!(snippets.len(), 1);
+
+        let snippet = snippets[0].clone();
+
+        assert_eq!(snippet.snippet_spdx_identifier, "SPDXRef-Snippet");
+        assert_eq!(
+            snippet.snippet_from_file_spdx_identifier,
+            "SPDXRef-DoapSource"
+        );
+        assert_eq!(snippet.ranges.len(), 2);
+        assert!(snippet
+            .ranges
+            .iter()
+            .any(|snip| snip.start_pointer == StartPointer::new(None, Some(310), None)));
+        assert!(snippet
+            .ranges
+            .iter()
+            .any(|snip| snip.end_pointer == EndPointer::new(None, Some(420), None)));
+        assert!(snippet
+            .ranges
+            .iter()
+            .any(|snip| snip.start_pointer == StartPointer::new(None, None, Some(5))));
+        assert!(snippet
+            .ranges
+            .iter()
+            .any(|snip| snip.end_pointer == EndPointer::new(None, None, Some(23))));
+        assert_eq!(
+            snippet.snippet_concluded_license,
+            SPDXExpression::parse("GPL-2.0-only").unwrap()
+        );
+        assert_eq!(snippet.license_information_in_snippet, vec!["GPL-2.0-only"]);
+        assert_eq!(snippet.snippet_comments_on_license, Some("The concluded license was taken from package xyz, from which the snippet was copied into the current file. The concluded license information was found in the COPYING.txt file in package xyz.".to_string()));
+        assert_eq!(
+            snippet.snippet_copyright_text,
+            "Copyright 2008-2010 John Smith"
+        );
+        assert_eq!(snippet.snippet_comment, Some("This snippet was identified as significant and highlighted in this Apache-2.0 file, when a commercial scanner identified it as being derived from file foo.c in package xyz which is licensed under GPL-2.0.".to_string()));
+        assert_eq!(snippet.snippet_name, Some("from linux kernel".to_string()));
     }
 }

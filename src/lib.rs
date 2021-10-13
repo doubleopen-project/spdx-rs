@@ -6,7 +6,8 @@
 #![allow(
     clippy::must_use_candidate,
     clippy::module_name_repetitions,
-    clippy::non_ascii_literal
+    clippy::non_ascii_literal,
+    clippy::missing_const_for_fn
 )]
 
 pub mod error;
