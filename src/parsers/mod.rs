@@ -106,6 +106,10 @@ fn spdx_from_atoms(atoms: &[Atom]) -> Result<SPDX, SpdxError> {
         other_licensing_information_detected.push(license_info);
     }
 
+    if document_creation_information_in_progress.is_some() {
+        document_creation_information_final = document_creation_information_in_progress;
+    }
+
     process_annotation(&mut annotation_in_progress, &mut annotations);
 
     Ok(SPDX {
