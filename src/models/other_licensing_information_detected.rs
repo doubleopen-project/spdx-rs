@@ -5,7 +5,7 @@
 use serde::{Deserialize, Serialize};
 
 /// <https://spdx.github.io/spdx-spec/6-other-licensing-information-detected/>
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct OtherLicensingInformationDetected {
     /// <https://spdx.github.io/spdx-spec/6-other-licensing-information-detected/#61-license-identifier>

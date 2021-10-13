@@ -8,8 +8,8 @@ use crate::{
     error::SpdxError,
     models::{
         Annotation, AnnotationType, DocumentCreationInformation, EndPointer,
-        ExternalPackageReference, FileInformation, PackageInformation, Range, Relationship,
-        SPDXExpression, Snippet, StartPointer, SPDX,
+        ExternalPackageReference, FileInformation, OtherLicensingInformationDetected,
+        PackageInformation, Range, Relationship, SPDXExpression, Snippet, StartPointer, SPDX,
     },
     parsers::tag_value::{atoms, Atom},
 };
@@ -30,6 +30,7 @@ pub fn spdx_from_tag_value(input: &str) -> Result<SPDX, SpdxError> {
     spdx.snippet_information = snippets_from_atoms(&atoms)?;
     spdx.relationships = relationships_from_atoms(&atoms)?;
     spdx.annotations = annotations_from_atoms(&atoms)?;
+    spdx.other_licensing_information_detected = license_info_from_atoms(&atoms)?;
 
     Ok(spdx)
 }
@@ -440,7 +441,6 @@ fn relationships_from_atoms(atoms: &[Atom]) -> Result<Vec<Relationship>, SpdxErr
     Ok(relationships)
 }
 
-#[allow(clippy::unnecessary_wraps)]
 fn annotations_from_atoms(atoms: &[Atom]) -> Result<Vec<Annotation>, SpdxError> {
     let mut annotations = Vec::new();
 
@@ -514,6 +514,62 @@ fn annotations_from_atoms(atoms: &[Atom]) -> Result<Vec<Annotation>, SpdxError> 
     }
 
     Ok(annotations)
+}
+
+#[allow(clippy::unnecessary_wraps)]
+fn license_info_from_atoms(
+    atoms: &[Atom],
+) -> Result<Vec<OtherLicensingInformationDetected>, SpdxError> {
+    let mut license_infos = Vec::new();
+    let mut license_info_in_progress: Option<OtherLicensingInformationDetected> = None;
+
+    for atom in atoms {
+        match atom {
+            Atom::LicenseID(value) => {
+                if let Some(license_info) = &mut license_info_in_progress {
+                    license_infos.push(license_info.clone());
+                }
+                license_info_in_progress = Some(OtherLicensingInformationDetected::default());
+
+                if let Some(license_info) = &mut license_info_in_progress {
+                    license_info.license_identifier = value.to_string();
+                }
+            }
+            Atom::ExtractedText(value) => {
+                if let Some(license_info) = &mut license_info_in_progress {
+                    license_info.extracted_text = value.to_string();
+                }
+            }
+            Atom::LicenseName(value) => {
+                if let Some(license_info) = &mut license_info_in_progress {
+                    license_info.license_name = value.to_string();
+                }
+            }
+            Atom::LicenseCrossReference(value) => {
+                if let Some(license_info) = &mut license_info_in_progress {
+                    license_info.license_cross_reference.push(value.to_string());
+                }
+            }
+            Atom::LicenseComment(value) => {
+                if let Some(license_info) = &mut license_info_in_progress {
+                    license_info.license_comment = Some(value.to_string());
+                }
+            }
+            Atom::TVComment(_) => continue,
+            _ => {
+                if let Some(file) = &mut license_info_in_progress {
+                    license_infos.push(file.clone());
+                    license_info_in_progress = None;
+                }
+            }
+        }
+    }
+
+    if let Some(license_info) = &mut license_info_in_progress {
+        license_infos.push(license_info.clone());
+    }
+
+    Ok(license_infos)
 }
 
 #[cfg(test)]
@@ -881,5 +937,32 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
                 "Another example reviewer.".to_string()
             )
         );
+    }
+
+    #[test]
+    fn license_info_is_retrieved() {
+        let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
+        let (_, atoms) = atoms(&file).unwrap();
+        let license_info = license_info_from_atoms(&atoms).unwrap();
+        assert_eq!(license_info.len(), 5);
+        assert_eq!(license_info[1].license_identifier, "LicenseRef-2");
+        assert_eq!(
+            license_info[3].license_name,
+            "Beer-Ware License (Version 42)"
+        );
+        assert_eq!(
+            license_info[3].license_cross_reference,
+            vec!["http://people.freebsd.org/~phk/"]
+        );
+        assert_eq!(
+            license_info[3].license_comment,
+            Some("The beerware license has a couple of other standard variants.".to_string())
+        );
+        assert!(license_info[3]
+            .extracted_text
+            .starts_with(r#""THE BEER-WARE"#));
+        assert!(license_info[3]
+            .extracted_text
+            .ends_with("Poul-Henning Kamp"));
     }
 }
