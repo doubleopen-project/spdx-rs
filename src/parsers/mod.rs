@@ -8,7 +8,7 @@ use crate::{
     error::SpdxError,
     models::{
         DocumentCreationInformation, EndPointer, ExternalPackageReference, FileInformation,
-        PackageInformation, Range, SPDXExpression, Snippet, StartPointer, SPDX,
+        PackageInformation, Range, Relationship, SPDXExpression, Snippet, StartPointer, SPDX,
     },
     parsers::tag_value::{atoms, Atom},
 };
@@ -27,6 +27,7 @@ pub fn spdx_from_tag_value(input: &str) -> Result<SPDX, SpdxError> {
     spdx.package_information = packages_from_atoms(&atoms)?;
     spdx.file_information = files_from_atoms(&atoms)?;
     spdx.snippet_information = snippets_from_atoms(&atoms)?;
+    spdx.relationships = relationships_from_atoms(&atoms)?;
 
     Ok(spdx)
 }
@@ -405,6 +406,38 @@ fn snippets_from_atoms(atoms: &[Atom]) -> Result<Vec<Snippet>, SpdxError> {
 
     Ok(snippets)
 }
+
+#[allow(clippy::unnecessary_wraps)]
+fn relationships_from_atoms(atoms: &[Atom]) -> Result<Vec<Relationship>, SpdxError> {
+    let mut relationships = Vec::new();
+    let mut relationship_in_progress: Option<Relationship> = None;
+
+    for atom in atoms {
+        match atom {
+            Atom::Relationship(value) => {
+                if let Some(relationship) = relationship_in_progress {
+                    relationships.push(relationship.clone());
+                }
+                relationship_in_progress = Some(value.clone());
+            }
+            Atom::RelationshipComment(value) => {
+                if let Some(relationship) = &mut relationship_in_progress {
+                    relationship.comment = Some(value.to_string());
+                }
+            }
+            _ => {
+                continue;
+            }
+        }
+    }
+
+    if let Some(relationship) = relationship_in_progress {
+        relationships.push(relationship);
+    }
+
+    Ok(relationships)
+}
+
 #[cfg(test)]
 #[allow(clippy::too_many_lines)]
 mod test_super {
@@ -724,5 +757,32 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
         );
         assert_eq!(snippet.snippet_comment, Some("This snippet was identified as significant and highlighted in this Apache-2.0 file, when a commercial scanner identified it as being derived from file foo.c in package xyz which is licensed under GPL-2.0.".to_string()));
         assert_eq!(snippet.snippet_name, Some("from linux kernel".to_string()));
+    }
+
+    #[test]
+    fn relationships_are_retrieved() {
+        let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
+        let (_, atoms) = atoms(&file).unwrap();
+        let relationships = relationships_from_atoms(&atoms).unwrap();
+        assert_eq!(relationships.len(), 9);
+
+        assert_eq!(
+            relationships[0],
+            Relationship::new(
+                "SPDXRef-DOCUMENT",
+                "SPDXRef-Package",
+                crate::models::RelationshipType::Contains,
+                None
+            )
+        );
+        assert_eq!(
+            relationships[7],
+            Relationship::new(
+                "SPDXRef-CommonsLangSrc",
+                "NOASSERTION",
+                crate::models::RelationshipType::GeneratedFrom,
+                None
+            )
+        );
     }
 }

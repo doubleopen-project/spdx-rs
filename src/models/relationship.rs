@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::AsRefStr;
 
 /// <https://spdx.github.io/spdx-spec/7-relationships-between-SPDX-elements/#71-relationship>
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Relationship {
     /// SPDX ID of the element.

@@ -17,10 +17,11 @@ use nom::{
 
 use crate::models::{
     Algorithm, Checksum, ExternalDocumentReference, ExternalPackageReference,
-    ExternalPackageReferenceCategory, FileType, PackageVerificationCode,
+    ExternalPackageReferenceCategory, FileType, PackageVerificationCode, Relationship,
+    RelationshipType,
 };
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(clippy::upper_case_acronyms)]
 pub(super) enum Atom {
     // Document Creation Information
@@ -94,7 +95,7 @@ pub(super) enum Atom {
     LicenseComment(String),
 
     // Relationship
-    Relationship(String),
+    Relationship(Relationship),
     RelationshipComment(String),
 
     // Annotation
@@ -204,7 +205,7 @@ fn tag_value_to_atom(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
         "LicenseComment" => Ok((i, Atom::LicenseComment(key_value.1.to_string()))),
 
         // Relationship
-        "Relationship" => Ok((i, Atom::Relationship(key_value.1.to_string()))),
+        "Relationship" => Ok((i, Atom::Relationship(relationship(key_value.1)?.1))),
         "RelationshipComment" => Ok((i, Atom::RelationshipComment(key_value.1.to_string()))),
 
         // Annotation
@@ -262,6 +263,69 @@ fn file_type(i: &str) -> IResult<&str, FileType, VerboseError<&str>> {
 
 fn document_ref<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
     preceded(tag("DocumentRef-"), ws(idstring))(i)
+}
+
+fn relationship(i: &str) -> IResult<&str, Relationship, VerboseError<&str>> {
+    map(
+        tuple((
+            ws(take_while(|c: char| !c.is_whitespace())),
+            ws(take_while(|c: char| !c.is_whitespace())),
+            ws(not_line_ending),
+        )),
+        |(item1, relationship_type, item2)| {
+            let relationship_type = match relationship_type {
+                "DESCRIBES" => RelationshipType::Describes,
+                "DESCRIBED_BY" => RelationshipType::DescribedBy,
+                "CONTAINS" => RelationshipType::Contains,
+                "CONTAINED_BY" => RelationshipType::ContainedBy,
+                "DEPENDS_ON" => RelationshipType::DependsOn,
+                "DEPENDENCY_OF" => RelationshipType::DependencyOf,
+                "DEPENDENCY_MANIFEST_OF" => RelationshipType::DependencyManifestOf,
+                "BUILD_DEPENDENCY_OF" => RelationshipType::BuildDependencyOf,
+                "DEV_DEPENDENCY_OF" => RelationshipType::DevDependencyOf,
+                "OPTIONAL_DEPENDENCY_OF" => RelationshipType::OptionalDependencyOf,
+                "PROVIDED_DEPENDENCY_OF" => RelationshipType::ProvidedDependencyOf,
+                "TEST_DEPENDENCY_OF" => RelationshipType::TestDependencyOf,
+                "RUNTIME_DEPENDENCY_OF" => RelationshipType::RuntimeDependencyOf,
+                "EXAMPLE_OF" => RelationshipType::ExampleOf,
+                "GENERATES" => RelationshipType::Generates,
+                "GENERATED_FROM" => RelationshipType::GeneratedFrom,
+                "ANCESTOR_OF" => RelationshipType::AncestorOf,
+                "DESCENDANT_OF" => RelationshipType::DescendantOf,
+                "VARIANT_OF" => RelationshipType::VariantOf,
+                "DISTRIBUTION_ARTIFACT" => RelationshipType::DistributionArtifact,
+                "PATCH_FOR" => RelationshipType::PatchFor,
+                "PATCH_APPLIED" => RelationshipType::PatchApplied,
+                "COPY_OF" => RelationshipType::CopyOf,
+                "FILE_ADDED" => RelationshipType::FileAdded,
+                "FILE_DELETED" => RelationshipType::FileDeleted,
+                "FILE_MODIFIED" => RelationshipType::FileModified,
+                "EXPANDED_FROM_ARCHIVE" => RelationshipType::ExpandedFromArchive,
+                "DYNAMIC_LINK" => RelationshipType::DynamicLink,
+                "STATIC_LINK" => RelationshipType::StaticLink,
+                "DATA_FILE_OF" => RelationshipType::DataFileOf,
+                "TEST_CASE_OF" => RelationshipType::TestCaseOf,
+                "BUILD_TOOL_OF" => RelationshipType::BuildToolOf,
+                "DEV_TOOL_OF" => RelationshipType::DevToolOf,
+                "TEST_OF" => RelationshipType::TestOf,
+                "TEST_TOOL_OF" => RelationshipType::TestToolOf,
+                "DOCUMENTATION_OF" => RelationshipType::DocumentationOf,
+                "OPTIONAL_COMPONENT_OF" => RelationshipType::OptionalComponentOf,
+                "METAFILE_OF" => RelationshipType::MetafileOf,
+                "PACKAGE_OF" => RelationshipType::PackageOf,
+                "AMENDS" => RelationshipType::Amends,
+                "PREREQUISITE_FOR" => RelationshipType::PrerequisiteFor,
+                "HAS_PREREQUISITE" => RelationshipType::HasPrerequisite,
+                "OTHER" => RelationshipType::Other,
+                // TODO: Proper error.
+                _ => {
+                    dbg!(relationship_type);
+                    todo!()
+                }
+            };
+            Relationship::new(item1, item2, relationship_type, None)
+        },
+    )(i)
 }
 
 fn external_package_reference(
@@ -377,10 +441,10 @@ mod tests {
     use std::fs::read_to_string;
 
     use crate::{
-        models::{Algorithm, ExternalPackageReferenceCategory},
+        models::{Algorithm, ExternalPackageReferenceCategory, Relationship},
         parsers::tag_value::{
             checksum, document_ref, external_document_reference, external_package_reference,
-            package_verification_code, range,
+            package_verification_code, range, relationship,
         },
     };
 
@@ -396,6 +460,18 @@ mod tests {
     fn range_can_be_parsed() {
         let (_, value) = range("310:420").unwrap();
         assert_eq!(value, (310, 420));
+    }
+
+    #[test]
+    fn relationship_can_be_parsed() {
+        let (_, value) = relationship("SPDXRef-JenaLib CONTAINS SPDXRef-Package").unwrap();
+        let expected = Relationship::new(
+            "SPDXRef-JenaLib",
+            "SPDXRef-Package",
+            crate::models::RelationshipType::Contains,
+            None,
+        );
+        assert_eq!(value, expected);
     }
 
     #[test]
