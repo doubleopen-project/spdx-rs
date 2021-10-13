@@ -57,6 +57,7 @@ pub enum RelationshipType {
     OptionalDependencyOf,
     ProvidedDependencyOf,
     TestDependencyOf,
+    RuntimeDependencyOf,
     ExampleOf,
     Generates,
     GeneratedFrom,
