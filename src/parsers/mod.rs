@@ -23,553 +23,627 @@ mod tag_value;
 pub fn spdx_from_tag_value(input: &str) -> Result<SPDX, SpdxError> {
     let (_, atoms) = atoms(input).map_err(|err| SpdxError::TagValueParse(err.to_string()))?;
 
-    let mut spdx = SPDX::new("SPDX from TV");
-    spdx.document_creation_information = document_creation_information_from_atoms(&atoms)?;
-    spdx.package_information = packages_from_atoms(&atoms)?;
-    spdx.file_information = files_from_atoms(&atoms)?;
-    spdx.snippet_information = snippets_from_atoms(&atoms)?;
-    spdx.relationships = relationships_from_atoms(&atoms)?;
-    spdx.annotations = annotations_from_atoms(&atoms)?;
-    spdx.other_licensing_information_detected = license_info_from_atoms(&atoms)?;
+    let spdx = spdx_from_atoms(&atoms)?;
 
     Ok(spdx)
 }
 
-fn document_creation_information_from_atoms(
-    atoms: &[Atom],
-) -> Result<DocumentCreationInformation, SpdxError> {
-    let mut document_creation_information = DocumentCreationInformation::default();
+#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
+fn spdx_from_atoms(atoms: &[Atom]) -> Result<SPDX, SpdxError> {
+    let mut document_creation_information_in_progress =
+        Some(DocumentCreationInformation::default());
+    let mut document_creation_information_final: Option<DocumentCreationInformation> = None;
 
-    // Get document creation information.
-    for atom in atoms {
-        match atom {
-            Atom::SpdxVersion(value) => {
-                document_creation_information.spdx_version = value.to_string();
-            }
-            Atom::DataLicense(value) => {
-                document_creation_information.data_license = value.to_string();
-            }
-            Atom::SPDXID(value) => {
-                document_creation_information.spdx_identifier = value.to_string();
-            }
-            Atom::DocumentName(value) => {
-                document_creation_information.document_name = value.to_string();
-            }
-            Atom::DocumentNamespace(value) => {
-                document_creation_information.spdx_document_namespace = value.to_string();
-            }
-            Atom::ExternalDocumentRef(value) => {
-                document_creation_information
-                    .external_document_references
-                    .push(value.clone());
-            }
-            Atom::LicenseListVersion(value) => {
-                document_creation_information
-                    .creation_info
-                    .license_list_version = Some(value.to_string());
-            }
-            Atom::Creator(value) => {
-                document_creation_information
-                    .creation_info
-                    .creators
-                    .push(value.to_string());
-            }
-            Atom::Created(value) => {
-                document_creation_information.creation_info.created =
-                    DateTime::parse_from_rfc3339(value)?.with_timezone(&Utc);
-            }
-            Atom::CreatorComment(value) => {
-                document_creation_information.creation_info.creator_comment =
-                    Some(value.to_string());
-            }
-            Atom::DocumentComment(value) => {
-                document_creation_information.document_comment = Some(value.to_string());
-            }
-            Atom::TVComment(_) => continue,
-            _ => break,
-        }
-    }
-    Ok(document_creation_information)
-}
-
-#[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
-fn packages_from_atoms(atoms: &[Atom]) -> Result<Vec<PackageInformation>, SpdxError> {
-    let mut packages = Vec::new();
+    let mut package_information: Vec<PackageInformation> = Vec::new();
     let mut package_in_progress: Option<PackageInformation> = None;
     let mut external_package_ref_in_progress: Option<ExternalPackageReference> = None;
 
-    for atom in atoms {
-        match atom {
-            Atom::PackageName(value) => {
-                if let Some(package) = &package_in_progress {
-                    packages.push(package.clone());
-                }
-                package_in_progress = Some(PackageInformation::default());
+    let mut other_licensing_information_detected: Vec<OtherLicensingInformationDetected> =
+        Vec::new();
+    let mut license_info_in_progress: Option<OtherLicensingInformationDetected> = None;
 
-                if let Some(package) = &mut package_in_progress {
-                    package.package_name = value.to_string();
-                }
-            }
-            Atom::SPDXID(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_spdx_identifier = value.to_string();
-                }
-            }
-            Atom::PackageVersion(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_version = Some(value.to_string());
-                }
-            }
-            Atom::PackageFileName(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_file_name = Some(value.to_string());
-                }
-            }
-            Atom::PackageSupplier(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_supplier = Some(value.to_string());
-                }
-            }
-            Atom::PackageOriginator(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_originator = Some(value.to_string());
-                }
-            }
-            Atom::PackageDownloadLocation(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_download_location = value.to_string();
-                }
-            }
-            Atom::PackageVerificationCode(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_verification_code = Some(value.clone());
-                }
-            }
-            Atom::PackageChecksum(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_checksum.push(value.clone());
-                }
-            }
-            Atom::PackageHomePage(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_home_page = Some(value.clone());
-                }
-            }
-            Atom::PackageSourceInfo(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.source_information = Some(value.clone());
-                }
-            }
-            Atom::PackageLicenseConcluded(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.concluded_license = SPDXExpression::parse(value)?;
-                }
-            }
-            Atom::PackageLicenseInfoFromFiles(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package
-                        .all_licenses_information_from_files
-                        .push(value.clone());
-                }
-            }
-            Atom::PackageLicenseDeclared(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.declared_license = SPDXExpression::parse(value)?;
-                }
-            }
-            Atom::PackageLicenseComments(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.comments_on_license = Some(value.clone());
-                }
-            }
-            Atom::PackageCopyrightText(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.copyright_text = value.clone();
-                }
-            }
-            Atom::PackageSummary(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_summary_description = Some(value.clone());
-                }
-            }
-            Atom::PackageDescription(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_detailed_description = Some(value.clone());
-                }
-            }
-            Atom::PackageAttributionText(value) => {
-                if let Some(package) = &mut package_in_progress {
-                    package.package_attribution_text.push(value.clone());
-                }
-            }
-            Atom::ExternalRef(value) => {
-                if let Some(pkg_ref) = &mut external_package_ref_in_progress {
-                    if let Some(package) = &mut package_in_progress {
-                        package.external_reference.push(pkg_ref.clone());
-                    }
-                }
-                external_package_ref_in_progress = Some(value.clone());
-            }
-            Atom::ExternalRefComment(value) => {
-                if let Some(pkg_ref) = &mut external_package_ref_in_progress {
-                    pkg_ref.reference_comment = Some(value.clone());
-                }
-            }
-            Atom::TVComment(_) => continue,
-            _ => {
-                if let Some(package) = &mut package_in_progress {
-                    if let Some(pkg_ref) = &mut external_package_ref_in_progress {
-                        package.external_reference.push(pkg_ref.clone());
-                        external_package_ref_in_progress = None;
-                    }
-                    packages.push(package.clone());
-                    package_in_progress = None;
-                }
-            }
+    let mut file_information: Vec<FileInformation> = Vec::new();
+    let mut file_in_progress: Option<FileInformation> = None;
+
+    let mut snippet_information: Vec<Snippet> = Vec::new();
+    let mut snippet_in_progress: Option<Snippet> = None;
+
+    let mut relationships: Vec<Relationship> = Vec::new();
+    let mut relationship_in_progress: Option<Relationship> = None;
+
+    let mut annotations: Vec<Annotation> = Vec::new();
+    let mut annotation_in_progress = AnnotationInProgress::default();
+
+    for atom in atoms {
+        let document_creation_information = process_atom_for_document_creation_information(
+            atom,
+            &mut document_creation_information_in_progress,
+        )?;
+        if let Some(document_creation_information) = document_creation_information {
+            document_creation_information_final = Some(document_creation_information);
+            document_creation_information_in_progress = None;
         }
+        process_atom_for_packages(
+            atom,
+            &mut package_information,
+            &mut package_in_progress,
+            &mut external_package_ref_in_progress,
+        )?;
+        process_atom_for_files(atom, &mut file_in_progress, &mut file_information)?;
+        process_atom_for_snippets(atom, &mut snippet_information, &mut snippet_in_progress)?;
+        process_atom_for_relationships(atom, &mut relationships, &mut relationship_in_progress)?;
+        process_atom_for_annotations(atom, &mut annotations, &mut annotation_in_progress)?;
+        process_atom_for_license_info(
+            atom,
+            &mut other_licensing_information_detected,
+            &mut license_info_in_progress,
+        )?;
+    }
+    if let Some(file) = file_in_progress {
+        file_information.push(file);
+    }
+    if let Some(snippet) = &mut snippet_in_progress {
+        snippet_information.push(snippet.clone());
     }
 
     if let Some(package) = package_in_progress {
-        packages.push(package);
-    }
-
-    Ok(packages)
-}
-
-fn files_from_atoms(atoms: &[Atom]) -> Result<Vec<FileInformation>, SpdxError> {
-    let mut files = Vec::new();
-    let mut file_in_progress: Option<FileInformation> = None;
-
-    for atom in atoms {
-        match atom {
-            Atom::FileName(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    files.push(file.clone());
-                }
-                file_in_progress = Some(FileInformation::default());
-
-                if let Some(file) = &mut file_in_progress {
-                    file.file_name = value.to_string();
-                }
-            }
-            Atom::SPDXID(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.file_spdx_identifier = value.to_string();
-                }
-            }
-            Atom::FileComment(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.file_comment = Some(value.to_string());
-                }
-            }
-            Atom::FileType(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.file_type.push(*value);
-                }
-            }
-            Atom::FileChecksum(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.file_checksum.push(value.clone());
-                }
-            }
-            Atom::LicenseConcluded(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.concluded_license = SPDXExpression::parse(value)?;
-                }
-            }
-            Atom::LicenseInfoInFile(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.license_information_in_file.push(value.clone());
-                }
-            }
-            Atom::LicenseComments(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.comments_on_license = Some(value.clone());
-                }
-            }
-            Atom::FileCopyrightText(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.copyright_text = value.clone();
-                }
-            }
-            Atom::FileNotice(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.file_notice = Some(value.clone());
-                }
-            }
-            Atom::FileContributor(value) => {
-                if let Some(file) = &mut file_in_progress {
-                    file.file_contributor.push(value.clone());
-                }
-            }
-            Atom::TVComment(_) => continue,
-            _ => {
-                if let Some(file) = &mut file_in_progress {
-                    files.push(file.clone());
-                    file_in_progress = None;
-                }
-            }
-        }
-    }
-
-    if let Some(file) = &mut file_in_progress {
-        files.push(file.clone());
-    }
-
-    Ok(files)
-}
-
-fn snippets_from_atoms(atoms: &[Atom]) -> Result<Vec<Snippet>, SpdxError> {
-    let mut snippets = Vec::new();
-    let mut snippet_in_progress: Option<Snippet> = None;
-
-    for atom in atoms {
-        match atom {
-            Atom::SnippetSPDXID(value) => {
-                if let Some(snippet) = &snippet_in_progress {
-                    snippets.push(snippet.clone());
-                }
-
-                snippet_in_progress = Some(Snippet::default());
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet.snippet_spdx_identifier = value.to_string();
-                }
-            }
-            Atom::SnippetFromFileSPDXID(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet.snippet_from_file_spdx_identifier = value.to_string();
-                }
-            }
-            Atom::SnippetByteRange(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    let start_pointer = StartPointer::new(None, Some(value.0), None);
-                    let end_pointer = EndPointer::new(None, Some(value.1), None);
-                    let range = Range::new(start_pointer, end_pointer);
-                    snippet.ranges.push(range);
-                }
-            }
-            Atom::SnippetLineRange(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    let start_pointer = StartPointer::new(None, None, Some(value.0));
-                    let end_pointer = EndPointer::new(None, None, Some(value.1));
-                    let range = Range::new(start_pointer, end_pointer);
-                    snippet.ranges.push(range);
-                }
-            }
-            Atom::SnippetLicenseConcluded(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet.snippet_concluded_license = SPDXExpression::parse(value)?;
-                }
-            }
-            Atom::LicenseInfoInSnippet(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet
-                        .license_information_in_snippet
-                        .push(value.to_string());
-                }
-            }
-            Atom::SnippetLicenseComments(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet.snippet_comments_on_license = Some(value.to_string());
-                }
-            }
-            Atom::SnippetCopyrightText(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet.snippet_copyright_text = value.to_string();
-                }
-            }
-            Atom::SnippetComment(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet.snippet_comment = Some(value.to_string());
-                }
-            }
-            Atom::SnippetName(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet.snippet_name = Some(value.to_string());
-                }
-            }
-            Atom::SnippetAttributionText(value) => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippet.snippet_attribution_text = Some(value.to_string());
-                }
-            }
-            Atom::TVComment(_) => continue,
-            _ => {
-                if let Some(snippet) = &mut snippet_in_progress {
-                    snippets.push(snippet.clone());
-                    snippet_in_progress = None;
-                }
-            }
-        }
-    }
-
-    if let Some(snippet) = &mut snippet_in_progress {
-        snippets.push(snippet.clone());
-    }
-
-    Ok(snippets)
-}
-
-#[allow(clippy::unnecessary_wraps)]
-fn relationships_from_atoms(atoms: &[Atom]) -> Result<Vec<Relationship>, SpdxError> {
-    let mut relationships = Vec::new();
-    let mut relationship_in_progress: Option<Relationship> = None;
-
-    for atom in atoms {
-        match atom {
-            Atom::Relationship(value) => {
-                if let Some(relationship) = relationship_in_progress {
-                    relationships.push(relationship.clone());
-                }
-                relationship_in_progress = Some(value.clone());
-            }
-            Atom::RelationshipComment(value) => {
-                if let Some(relationship) = &mut relationship_in_progress {
-                    relationship.comment = Some(value.to_string());
-                }
-            }
-            _ => {
-                continue;
-            }
-        }
+        package_information.push(package);
     }
 
     if let Some(relationship) = relationship_in_progress {
         relationships.push(relationship);
     }
 
-    Ok(relationships)
-}
-
-fn annotations_from_atoms(atoms: &[Atom]) -> Result<Vec<Annotation>, SpdxError> {
-    let mut annotations = Vec::new();
-
-    let mut annotator_in_progress: Option<String> = None;
-    let mut date_in_progress: Option<DateTime<Utc>> = None;
-    let mut comment_in_progress: Option<String> = None;
-    let mut type_in_progress: Option<AnnotationType> = None;
-    let mut spdxref_in_progress: Option<String> = None;
-
-    let mut process_annotation =
-        |mut annotator_in_progress: &mut Option<String>,
-         mut date_in_progress: &mut Option<DateTime<Utc>>,
-         mut comment_in_progress: &mut Option<String>,
-         mut type_in_progress: &mut Option<AnnotationType>,
-         mut spdxref_in_progress: &mut Option<String>| {
-            if let (
-                Some(annotator),
-                Some(date),
-                Some(comment),
-                Some(annotation_type),
-                Some(spdxref),
-            ) = (
-                &mut annotator_in_progress,
-                &mut date_in_progress,
-                &mut comment_in_progress,
-                &mut type_in_progress,
-                &mut spdxref_in_progress,
-            ) {
-                let annotation = Annotation::new(
-                    annotator.clone(),
-                    *date,
-                    *annotation_type,
-                    Some(spdxref.clone()),
-                    comment.clone(),
-                );
-                *annotator_in_progress = None;
-                *date_in_progress = None;
-                *comment_in_progress = None;
-                *type_in_progress = None;
-                *spdxref_in_progress = None;
-                annotations.push(annotation);
-            }
-        };
-
-    for atom in atoms {
-        match atom {
-            Atom::Annotator(value) => {
-                annotator_in_progress = Some(value.clone());
-            }
-            Atom::AnnotationDate(value) => {
-                date_in_progress = Some(DateTime::parse_from_rfc3339(value)?.with_timezone(&Utc));
-            }
-            Atom::AnnotationComment(value) => {
-                comment_in_progress = Some(value.clone());
-            }
-            Atom::AnnotationType(value) => {
-                type_in_progress = Some(*value);
-            }
-            Atom::SPDXREF(value) => {
-                spdxref_in_progress = Some(value.clone());
-            }
-            _ => {}
-        }
-        process_annotation(
-            &mut annotator_in_progress,
-            &mut date_in_progress,
-            &mut comment_in_progress,
-            &mut type_in_progress,
-            &mut spdxref_in_progress,
-        );
+    if let Some(license_info) = license_info_in_progress {
+        other_licensing_information_detected.push(license_info);
     }
 
-    Ok(annotations)
+    process_annotation(&mut annotation_in_progress, &mut annotations);
+
+    Ok(SPDX {
+        document_creation_information: document_creation_information_final
+            // TODO: Proper error handling
+            .expect("If this doesn't exist, the document is not valid."),
+        package_information,
+        other_licensing_information_detected,
+        file_information,
+        snippet_information,
+        relationships,
+        annotations,
+        // TODO: This should probably be removed.
+        spdx_ref_counter: 0,
+    })
+}
+
+fn process_atom_for_document_creation_information(
+    atom: &Atom,
+    mut document_creation_information_in_progress: &mut Option<DocumentCreationInformation>,
+) -> Result<Option<DocumentCreationInformation>, SpdxError> {
+    // Get document creation information.
+    let mut final_creation_information = None;
+    match atom {
+        Atom::SpdxVersion(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information.spdx_version = value.to_string();
+            }
+        }
+        Atom::DataLicense(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information.data_license = value.to_string();
+            }
+        }
+        Atom::SPDXID(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information.spdx_identifier = value.to_string();
+            }
+        }
+        Atom::DocumentName(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information.document_name = value.to_string();
+            }
+        }
+        Atom::DocumentNamespace(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information.spdx_document_namespace = value.to_string();
+            }
+        }
+        Atom::ExternalDocumentRef(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information
+                    .external_document_references
+                    .push(value.clone());
+            }
+        }
+        Atom::LicenseListVersion(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information
+                    .creation_info
+                    .license_list_version = Some(value.to_string());
+            }
+        }
+        Atom::Creator(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information
+                    .creation_info
+                    .creators
+                    .push(value.to_string());
+            }
+        }
+        Atom::Created(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information.creation_info.created =
+                    DateTime::parse_from_rfc3339(value)?.with_timezone(&Utc);
+            }
+        }
+        Atom::CreatorComment(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information.creation_info.creator_comment =
+                    Some(value.to_string());
+            }
+        }
+        Atom::DocumentComment(value) => {
+            if let Some(document_creation_information) =
+                &mut document_creation_information_in_progress
+            {
+                document_creation_information.document_comment = Some(value.to_string());
+            }
+        }
+        Atom::TVComment(_) => {}
+        _ => {
+            if let Some(document_creation_information) = document_creation_information_in_progress {
+                final_creation_information = Some(document_creation_information.clone());
+            }
+        }
+    }
+    Ok(final_creation_information)
+}
+
+#[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
+fn process_atom_for_packages(
+    atom: &Atom,
+    packages: &mut Vec<PackageInformation>,
+    mut package_in_progress: &mut Option<PackageInformation>,
+    mut external_package_ref_in_progress: &mut Option<ExternalPackageReference>,
+) -> Result<(), SpdxError> {
+    match atom {
+        Atom::PackageName(value) => {
+            if let Some(package) = &mut package_in_progress {
+                if let Some(pkg_ref) = &mut external_package_ref_in_progress {
+                    package.external_reference.push(pkg_ref.clone());
+                    *external_package_ref_in_progress = None;
+                }
+                packages.push(package.clone());
+            }
+            *package_in_progress = Some(PackageInformation::default());
+
+            if let Some(package) = &mut package_in_progress {
+                package.package_name = value.to_string();
+            }
+        }
+        Atom::SPDXID(value) => {
+            if let Some(package) = &mut package_in_progress {
+                if package.package_spdx_identifier == "NOASSERTION" {
+                    package.package_spdx_identifier = value.to_string();
+                }
+            }
+        }
+        Atom::PackageVersion(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_version = Some(value.to_string());
+            }
+        }
+        Atom::PackageFileName(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_file_name = Some(value.to_string());
+            }
+        }
+        Atom::PackageSupplier(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_supplier = Some(value.to_string());
+            }
+        }
+        Atom::PackageOriginator(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_originator = Some(value.to_string());
+            }
+        }
+        Atom::PackageDownloadLocation(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_download_location = value.to_string();
+            }
+        }
+        Atom::PackageVerificationCode(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_verification_code = Some(value.clone());
+            }
+        }
+        Atom::PackageChecksum(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_checksum.push(value.clone());
+            }
+        }
+        Atom::PackageHomePage(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_home_page = Some(value.clone());
+            }
+        }
+        Atom::PackageSourceInfo(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.source_information = Some(value.clone());
+            }
+        }
+        Atom::PackageLicenseConcluded(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.concluded_license = SPDXExpression::parse(value)?;
+            }
+        }
+        Atom::PackageLicenseInfoFromFiles(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package
+                    .all_licenses_information_from_files
+                    .push(value.clone());
+            }
+        }
+        Atom::PackageLicenseDeclared(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.declared_license = SPDXExpression::parse(value)?;
+            }
+        }
+        Atom::PackageLicenseComments(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.comments_on_license = Some(value.clone());
+            }
+        }
+        Atom::PackageCopyrightText(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.copyright_text = value.clone();
+            }
+        }
+        Atom::PackageSummary(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_summary_description = Some(value.clone());
+            }
+        }
+        Atom::PackageDescription(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_detailed_description = Some(value.clone());
+            }
+        }
+        Atom::PackageAttributionText(value) => {
+            if let Some(package) = &mut package_in_progress {
+                package.package_attribution_text.push(value.clone());
+            }
+        }
+        Atom::ExternalRef(value) => {
+            if let Some(pkg_ref) = &mut external_package_ref_in_progress {
+                if let Some(package) = &mut package_in_progress {
+                    package.external_reference.push(pkg_ref.clone());
+                }
+            }
+            *external_package_ref_in_progress = Some(value.clone());
+        }
+        Atom::ExternalRefComment(value) => {
+            if let Some(pkg_ref) = &mut external_package_ref_in_progress {
+                pkg_ref.reference_comment = Some(value.clone());
+            }
+        }
+        _ => {}
+    }
+
+    Ok(())
+}
+
+fn process_atom_for_files(
+    atom: &Atom,
+    mut file_in_progress: &mut Option<FileInformation>,
+    files: &mut Vec<FileInformation>,
+) -> Result<(), SpdxError> {
+    match atom {
+        Atom::PackageName(_) => {
+            if let Some(file) = &mut file_in_progress {
+                files.push(file.clone());
+                *file_in_progress = None;
+            }
+        }
+        Atom::FileName(value) => {
+            if let Some(file) = &mut file_in_progress {
+                files.push(file.clone());
+            }
+            *file_in_progress = Some(FileInformation::default());
+
+            if let Some(file) = &mut file_in_progress {
+                file.file_name = value.to_string();
+            }
+        }
+        Atom::SPDXID(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.file_spdx_identifier = value.to_string();
+            }
+        }
+        Atom::FileComment(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.file_comment = Some(value.to_string());
+            }
+        }
+        Atom::FileType(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.file_type.push(*value);
+            }
+        }
+        Atom::FileChecksum(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.file_checksum.push(value.clone());
+            }
+        }
+        Atom::LicenseConcluded(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.concluded_license = SPDXExpression::parse(value)?;
+            }
+        }
+        Atom::LicenseInfoInFile(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.license_information_in_file.push(value.clone());
+            }
+        }
+        Atom::LicenseComments(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.comments_on_license = Some(value.clone());
+            }
+        }
+        Atom::FileCopyrightText(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.copyright_text = value.clone();
+            }
+        }
+        Atom::FileNotice(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.file_notice = Some(value.clone());
+            }
+        }
+        Atom::FileContributor(value) => {
+            if let Some(file) = &mut file_in_progress {
+                file.file_contributor.push(value.clone());
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+fn process_atom_for_snippets(
+    atom: &Atom,
+    snippets: &mut Vec<Snippet>,
+    mut snippet_in_progress: &mut Option<Snippet>,
+) -> Result<(), SpdxError> {
+    match atom {
+        Atom::SnippetSPDXID(value) => {
+            if let Some(snippet) = &snippet_in_progress {
+                snippets.push(snippet.clone());
+            }
+
+            *snippet_in_progress = Some(Snippet::default());
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet.snippet_spdx_identifier = value.to_string();
+            }
+        }
+        Atom::SnippetFromFileSPDXID(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet.snippet_from_file_spdx_identifier = value.to_string();
+            }
+        }
+        Atom::SnippetByteRange(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                let start_pointer = StartPointer::new(None, Some(value.0), None);
+                let end_pointer = EndPointer::new(None, Some(value.1), None);
+                let range = Range::new(start_pointer, end_pointer);
+                snippet.ranges.push(range);
+            }
+        }
+        Atom::SnippetLineRange(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                let start_pointer = StartPointer::new(None, None, Some(value.0));
+                let end_pointer = EndPointer::new(None, None, Some(value.1));
+                let range = Range::new(start_pointer, end_pointer);
+                snippet.ranges.push(range);
+            }
+        }
+        Atom::SnippetLicenseConcluded(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet.snippet_concluded_license = SPDXExpression::parse(value)?;
+            }
+        }
+        Atom::LicenseInfoInSnippet(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet
+                    .license_information_in_snippet
+                    .push(value.to_string());
+            }
+        }
+        Atom::SnippetLicenseComments(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet.snippet_comments_on_license = Some(value.to_string());
+            }
+        }
+        Atom::SnippetCopyrightText(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet.snippet_copyright_text = value.to_string();
+            }
+        }
+        Atom::SnippetComment(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet.snippet_comment = Some(value.to_string());
+            }
+        }
+        Atom::SnippetName(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet.snippet_name = Some(value.to_string());
+            }
+        }
+        Atom::SnippetAttributionText(value) => {
+            if let Some(snippet) = &mut snippet_in_progress {
+                snippet.snippet_attribution_text = Some(value.to_string());
+            }
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 #[allow(clippy::unnecessary_wraps)]
-fn license_info_from_atoms(
-    atoms: &[Atom],
-) -> Result<Vec<OtherLicensingInformationDetected>, SpdxError> {
-    let mut license_infos = Vec::new();
-    let mut license_info_in_progress: Option<OtherLicensingInformationDetected> = None;
-
-    for atom in atoms {
-        match atom {
-            Atom::LicenseID(value) => {
-                if let Some(license_info) = &mut license_info_in_progress {
-                    license_infos.push(license_info.clone());
-                }
-                license_info_in_progress = Some(OtherLicensingInformationDetected::default());
-
-                if let Some(license_info) = &mut license_info_in_progress {
-                    license_info.license_identifier = value.to_string();
-                }
+fn process_atom_for_relationships(
+    atom: &Atom,
+    relationships: &mut Vec<Relationship>,
+    mut relationship_in_progress: &mut Option<Relationship>,
+) -> Result<(), SpdxError> {
+    match atom {
+        Atom::Relationship(value) => {
+            if let Some(relationship) = relationship_in_progress {
+                relationships.push(relationship.clone());
             }
-            Atom::ExtractedText(value) => {
-                if let Some(license_info) = &mut license_info_in_progress {
-                    license_info.extracted_text = value.to_string();
-                }
-            }
-            Atom::LicenseName(value) => {
-                if let Some(license_info) = &mut license_info_in_progress {
-                    license_info.license_name = value.to_string();
-                }
-            }
-            Atom::LicenseCrossReference(value) => {
-                if let Some(license_info) = &mut license_info_in_progress {
-                    license_info.license_cross_reference.push(value.to_string());
-                }
-            }
-            Atom::LicenseComment(value) => {
-                if let Some(license_info) = &mut license_info_in_progress {
-                    license_info.license_comment = Some(value.to_string());
-                }
-            }
-            Atom::TVComment(_) => continue,
-            _ => {
-                if let Some(file) = &mut license_info_in_progress {
-                    license_infos.push(file.clone());
-                    license_info_in_progress = None;
-                }
+            *relationship_in_progress = Some(value.clone());
+        }
+        Atom::RelationshipComment(value) => {
+            if let Some(relationship) = &mut relationship_in_progress {
+                relationship.comment = Some(value.to_string());
             }
         }
+        _ => {}
     }
 
-    if let Some(license_info) = &mut license_info_in_progress {
-        license_infos.push(license_info.clone());
+    Ok(())
+}
+
+#[derive(Debug, Default)]
+struct AnnotationInProgress {
+    annotator_in_progress: Option<String>,
+    date_in_progress: Option<DateTime<Utc>>,
+    comment_in_progress: Option<String>,
+    type_in_progress: Option<AnnotationType>,
+    spdxref_in_progress: Option<String>,
+}
+
+fn process_annotation(
+    mut annotation_in_progress: &mut AnnotationInProgress,
+
+    annotations: &mut Vec<Annotation>,
+) {
+    if let AnnotationInProgress {
+        annotator_in_progress: Some(annotator),
+        date_in_progress: Some(date),
+        comment_in_progress: Some(comment),
+        type_in_progress: Some(annotation_type),
+        spdxref_in_progress: Some(spdxref),
+    } = &mut annotation_in_progress
+    {
+        let annotation = Annotation::new(
+            annotator.clone(),
+            *date,
+            *annotation_type,
+            Some(spdxref.clone()),
+            comment.clone(),
+        );
+        *annotation_in_progress = AnnotationInProgress {
+            annotator_in_progress: None,
+            comment_in_progress: None,
+            date_in_progress: None,
+            spdxref_in_progress: None,
+            type_in_progress: None,
+        };
+        annotations.push(annotation);
+    }
+}
+
+fn process_atom_for_annotations(
+    atom: &Atom,
+    mut annotations: &mut Vec<Annotation>,
+    mut annotation_in_progress: &mut AnnotationInProgress,
+) -> Result<(), SpdxError> {
+    process_annotation(annotation_in_progress, &mut annotations);
+
+    match atom {
+        Atom::Annotator(value) => {
+            annotation_in_progress.annotator_in_progress = Some(value.clone());
+        }
+        Atom::AnnotationDate(value) => {
+            annotation_in_progress.date_in_progress =
+                Some(DateTime::parse_from_rfc3339(value)?.with_timezone(&Utc));
+        }
+        Atom::AnnotationComment(value) => {
+            annotation_in_progress.comment_in_progress = Some(value.clone());
+        }
+        Atom::AnnotationType(value) => {
+            annotation_in_progress.type_in_progress = Some(*value);
+        }
+        Atom::SPDXREF(value) => {
+            annotation_in_progress.spdxref_in_progress = Some(value.clone());
+        }
+        _ => {}
     }
 
-    Ok(license_infos)
+    Ok(())
+}
+
+#[allow(clippy::unnecessary_wraps)]
+fn process_atom_for_license_info(
+    atom: &Atom,
+    license_infos: &mut Vec<OtherLicensingInformationDetected>,
+    mut license_info_in_progress: &mut Option<OtherLicensingInformationDetected>,
+) -> Result<(), SpdxError> {
+    match atom {
+        Atom::LicenseID(value) => {
+            if let Some(license_info) = &mut license_info_in_progress {
+                license_infos.push(license_info.clone());
+            }
+            *license_info_in_progress = Some(OtherLicensingInformationDetected::default());
+
+            if let Some(license_info) = &mut license_info_in_progress {
+                license_info.license_identifier = value.to_string();
+            }
+        }
+        Atom::ExtractedText(value) => {
+            if let Some(license_info) = &mut license_info_in_progress {
+                license_info.extracted_text = value.to_string();
+            }
+        }
+        Atom::LicenseName(value) => {
+            if let Some(license_info) = &mut license_info_in_progress {
+                license_info.license_name = value.to_string();
+            }
+        }
+        Atom::LicenseCrossReference(value) => {
+            if let Some(license_info) = &mut license_info_in_progress {
+                license_info.license_cross_reference.push(value.to_string());
+            }
+        }
+        Atom::LicenseComment(value) => {
+            if let Some(license_info) = &mut license_info_in_progress {
+                license_info.license_comment = Some(value.to_string());
+            }
+        }
+        _ => {}
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -596,9 +670,8 @@ mod test_super {
     #[test]
     fn spdx_creation_info_is_retrieved() {
         let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
-        let (_, atoms) = atoms(&file).unwrap();
-        let document_creation_information =
-            document_creation_information_from_atoms(&atoms).unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+        let document_creation_information = spdx.document_creation_information;
         assert_eq!(document_creation_information.spdx_version, "SPDX-2.2");
         assert_eq!(document_creation_information.data_license, "CC0-1.0");
         assert_eq!(
@@ -665,8 +738,8 @@ compatible system run time libraries."
     #[test]
     fn package_info_is_retrieved() {
         let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
-        let (_, atoms) = atoms(&file).unwrap();
-        let packages = packages_from_atoms(&atoms).unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+        let packages = spdx.package_information;
         assert_eq!(packages.len(), 4);
 
         let glibc = packages.iter().find(|p| p.package_name == "glibc").unwrap();
@@ -785,8 +858,8 @@ compatible system run time libraries."
     #[test]
     fn file_info_is_retrieved() {
         let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
-        let (_, atoms) = atoms(&file).unwrap();
-        let files = files_from_atoms(&atoms).unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+        let files = spdx.file_information;
         assert_eq!(files.len(), 4);
 
         let fooc = files
@@ -851,8 +924,8 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
     #[test]
     fn snippet_info_is_retrieved() {
         let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
-        let (_, atoms) = atoms(&file).unwrap();
-        let snippets = snippets_from_atoms(&atoms).unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+        let snippets = spdx.snippet_information;
         assert_eq!(snippets.len(), 1);
 
         let snippet = snippets[0].clone();
@@ -896,8 +969,8 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
     #[test]
     fn relationships_are_retrieved() {
         let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
-        let (_, atoms) = atoms(&file).unwrap();
-        let relationships = relationships_from_atoms(&atoms).unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+        let relationships = spdx.relationships;
         assert_eq!(relationships.len(), 9);
 
         assert_eq!(
@@ -923,8 +996,8 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
     #[test]
     fn annotations_are_retrieved() {
         let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
-        let (_, atoms) = atoms(&file).unwrap();
-        let annotations = annotations_from_atoms(&atoms).unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+        let annotations = spdx.annotations;
         assert_eq!(annotations.len(), 5);
 
         assert_eq!(
@@ -942,8 +1015,8 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
     #[test]
     fn license_info_is_retrieved() {
         let file = read_to_string("tests/data/SPDXTagExample-v2.2.spdx").unwrap();
-        let (_, atoms) = atoms(&file).unwrap();
-        let license_info = license_info_from_atoms(&atoms).unwrap();
+        let spdx = spdx_from_tag_value(&file).unwrap();
+        let license_info = spdx.other_licensing_information_detected;
         assert_eq!(license_info.len(), 5);
         assert_eq!(license_info[1].license_identifier, "LicenseRef-2");
         assert_eq!(

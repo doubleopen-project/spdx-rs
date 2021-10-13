@@ -147,7 +147,7 @@ impl Default for PackageInformation {
     fn default() -> Self {
         Self {
             package_name: "NOASSERTION".to_string(),
-            package_spdx_identifier: "SPDXRef-1".to_string(),
+            package_spdx_identifier: "NOASSERTION".to_string(),
             package_version: None,
             package_file_name: None,
             package_supplier: None,
