@@ -285,7 +285,8 @@ fn relationship(i: &str) -> IResult<&str, Relationship, VerboseError<&str>> {
             ws(not_line_ending),
         )),
         |(item1, relationship_type, item2)| {
-            let relationship_type = match relationship_type {
+            let relationship_type = relationship_type.to_uppercase();
+            let relationship_type = match relationship_type.as_str() {
                 "DESCRIBES" => RelationshipType::Describes,
                 "DESCRIBED_BY" => RelationshipType::DescribedBy,
                 "CONTAINS" => RelationshipType::Contains,
@@ -658,5 +659,13 @@ Comment</text>",
         assert!(result.contains(&Atom::SpdxVersion("SPDX-2.2".to_string())));
         assert!(result.contains(&Atom::LicenseListVersion("3.9".to_string())));
         assert!(result.contains(&Atom::PackageLicenseDeclared("MPL-1.0".to_string())));
+    }
+
+    #[test]
+    fn relationship_case() {
+        relationship("SPDXRef-DOCUMENT DESCRIBES SPDXRef-File")
+            .expect("Caps is expected");
+        relationship("SPDXRef-DOCUMENT describes SPDXRef-File")
+            .expect("At least reuse-tool emits lowercase");
     }
 }
