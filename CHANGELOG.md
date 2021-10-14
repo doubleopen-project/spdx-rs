@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Accepts lowercase relationship types when parsing tag-value documents.
+
 ## [0.2.0] - 2021-10-13
 
 ### Changed
