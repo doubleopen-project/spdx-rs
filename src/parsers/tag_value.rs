@@ -663,8 +663,7 @@ Comment</text>",
 
     #[test]
     fn relationship_case() {
-        relationship("SPDXRef-DOCUMENT DESCRIBES SPDXRef-File")
-            .expect("Caps is expected");
+        relationship("SPDXRef-DOCUMENT DESCRIBES SPDXRef-File").expect("Caps is expected");
         relationship("SPDXRef-DOCUMENT describes SPDXRef-File")
             .expect("At least reuse-tool emits lowercase");
     }
