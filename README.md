@@ -6,6 +6,13 @@ SPDX-License-Identifier: MIT
 
 # SPDX Documents in Rust
 
+[![crates.io-icon]][crates.io] [![docs.rs-icon]][docs.rs]
+
+[crates.io-icon]: https://img.shields.io/crates/v/spdx-rs
+[crates.io]: https://crates.io/crates/spdx-rs
+[docs.rs-icon]: https://img.shields.io/docsrs/spdx-rs
+[docs.rs]: https://docs.rs/spdx-rs
+
 `spdx-rs` parses [SPDX documents] in multiple data formats to Rust structs.
 
 ## Data formats
