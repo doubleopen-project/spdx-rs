@@ -32,3 +32,9 @@ Simple usage examples for parsing documents from JSON and tag-value formats can 
 [SPDX documents]: https://spdx.github.io/spdx-spec/
 [Serde]: https://serde.rs/
 [integration tests]: https://github.com/doubleopen-project/spdx-rs/tree/main/tests/integration.rs
+
+## License
+
+The project is licensed under the [MIT License][LICENSE.txt].
+
+[LICENSE.txt]: license.txt
