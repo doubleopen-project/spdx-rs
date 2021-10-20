@@ -32,9 +32,9 @@ use chrono::{DateTime, Utc};
 use crate::{
     error::SpdxError,
     models::{
-        Annotation, AnnotationType, DocumentCreationInformation, EndPointer,
-        ExternalPackageReference, FileInformation, OtherLicensingInformationDetected,
-        PackageInformation, Range, Relationship, SPDXExpression, Snippet, StartPointer, SPDX,
+        Annotation, AnnotationType, DocumentCreationInformation, ExternalPackageReference,
+        FileInformation, OtherLicensingInformationDetected, PackageInformation, Pointer, Range,
+        Relationship, SPDXExpression, Snippet, SPDX,
     },
     parsers::tag_value::{atoms, Atom},
 };
@@ -518,16 +518,16 @@ fn process_atom_for_snippets(
         }
         Atom::SnippetByteRange(value) => {
             if let Some(snippet) = &mut snippet_in_progress {
-                let start_pointer = StartPointer::new(None, Some(value.0), None);
-                let end_pointer = EndPointer::new(None, Some(value.1), None);
+                let start_pointer = Pointer::new_byte(None, value.0);
+                let end_pointer = Pointer::new_byte(None, value.1);
                 let range = Range::new(start_pointer, end_pointer);
                 snippet.ranges.push(range);
             }
         }
         Atom::SnippetLineRange(value) => {
             if let Some(snippet) = &mut snippet_in_progress {
-                let start_pointer = StartPointer::new(None, None, Some(value.0));
-                let end_pointer = EndPointer::new(None, None, Some(value.1));
+                let start_pointer = Pointer::new_line(None, value.0);
+                let end_pointer = Pointer::new_line(None, value.1);
                 let range = Range::new(start_pointer, end_pointer);
                 snippet.ranges.push(range);
             }
@@ -1004,19 +1004,19 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
         assert!(snippet
             .ranges
             .iter()
-            .any(|snip| snip.start_pointer == StartPointer::new(None, Some(310), None)));
+            .any(|snip| snip.start_pointer == Pointer::new_byte(None, 310)));
         assert!(snippet
             .ranges
             .iter()
-            .any(|snip| snip.end_pointer == EndPointer::new(None, Some(420), None)));
+            .any(|snip| snip.end_pointer == Pointer::new_byte(None, 420)));
         assert!(snippet
             .ranges
             .iter()
-            .any(|snip| snip.start_pointer == StartPointer::new(None, None, Some(5))));
+            .any(|snip| snip.start_pointer == Pointer::new_line(None, 5)));
         assert!(snippet
             .ranges
             .iter()
-            .any(|snip| snip.end_pointer == EndPointer::new(None, None, Some(23))));
+            .any(|snip| snip.end_pointer == Pointer::new_line(None, 23)));
         assert_eq!(
             snippet.snippet_concluded_license,
             SPDXExpression::parse("GPL-2.0-only").unwrap()

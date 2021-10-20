@@ -4,7 +4,7 @@
 
 [package]
 name = "spdx-rs"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Mikko Murto <mikko.murto@hhpartners.fi>"]
 edition = "2018"
 license = "MIT"

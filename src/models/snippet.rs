@@ -65,12 +65,12 @@ pub struct Snippet {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Range {
-    pub start_pointer: StartPointer,
-    pub end_pointer: EndPointer,
+    pub start_pointer: Pointer,
+    pub end_pointer: Pointer,
 }
 
 impl Range {
-    pub fn new(start_pointer: StartPointer, end_pointer: EndPointer) -> Self {
+    pub fn new(start_pointer: Pointer, end_pointer: Pointer) -> Self {
         Self {
             start_pointer,
             end_pointer,
@@ -78,39 +78,30 @@ impl Range {
     }
 }
 
-/// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct StartPointer {
-    pub reference: Option<String>,
-    pub offset: Option<i32>,
-    pub line_number: Option<i32>,
+#[serde(untagged)]
+pub enum Pointer {
+    Byte {
+        reference: Option<String>,
+        offset: i32,
+    },
+    Line {
+        reference: Option<String>,
+        #[serde(rename = "lineNumber")]
+        line_number: i32,
+    },
 }
 
-impl StartPointer {
-    pub fn new(reference: Option<String>, offset: Option<i32>, line_number: Option<i32>) -> Self {
-        Self {
-            reference,
-            offset,
-            line_number,
-        }
+impl Pointer {
+    /// Create a new [`Pointer::Byte`].
+    pub fn new_byte(reference: Option<String>, offset: i32) -> Self {
+        Self::Byte { reference, offset }
     }
-}
 
-/// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct EndPointer {
-    pub reference: Option<String>,
-    pub offset: Option<i32>,
-    pub line_number: Option<i32>,
-}
-
-impl EndPointer {
-    pub fn new(reference: Option<String>, offset: Option<i32>, line_number: Option<i32>) -> Self {
-        Self {
+    /// Create a new [`Pointer::Line`].
+    pub fn new_line(reference: Option<String>, line_number: i32) -> Self {
+        Self::Line {
             reference,
-            offset,
             line_number,
         }
     }
@@ -156,28 +147,24 @@ mod test {
             spdx.snippet_information[0].ranges,
             vec![
                 Range {
-                    end_pointer: EndPointer {
-                        line_number: Some(23),
+                    end_pointer: Pointer::Line {
+                        line_number: 23,
                         reference: Some("SPDXRef-DoapSource".to_string()),
-                        offset: None
                     },
-                    start_pointer: StartPointer {
-                        line_number: Some(5),
+                    start_pointer: Pointer::Line {
+                        line_number: 5,
                         reference: Some("SPDXRef-DoapSource".to_string()),
-                        offset: None
-                    }
+                    },
                 },
                 Range {
-                    end_pointer: EndPointer {
-                        line_number: None,
+                    end_pointer: Pointer::Byte {
+                        offset: 420,
                         reference: Some("SPDXRef-DoapSource".to_string()),
-                        offset: Some(420)
                     },
-                    start_pointer: StartPointer {
-                        line_number: None,
+                    start_pointer: Pointer::Byte {
+                        offset: 310,
                         reference: Some("SPDXRef-DoapSource".to_string()),
-                        offset: Some(310)
-                    }
+                    },
                 },
             ]
         );
