@@ -7,24 +7,6 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum SpdxError {
-    #[error("Error with serde_yaml.")]
-    SerdeYaml {
-        #[from]
-        source: serde_yaml::Error,
-    },
-
-    #[error("Error with serde_yaml.")]
-    SerdeJson {
-        #[from]
-        source: serde_json::Error,
-    },
-
-    #[error("Error with HTML request.")]
-    Request {
-        #[from]
-        source: reqwest::Error,
-    },
-
     #[error("Error parsing an SPDX Expression: {0}")]
     Parse(String),
 

@@ -13,7 +13,7 @@
 //! # fn main() -> Result<(), SpdxError> {
 //!
 //! let spdx_file = std::fs::read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json")?;
-//! let spdx_document: SPDX = serde_json::from_str(&spdx_file)?;
+//! let spdx_document: SPDX = serde_json::from_str(&spdx_file).unwrap();
 //!
 //! assert_eq!(
 //!     spdx_document.document_creation_information.document_name,
