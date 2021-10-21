@@ -5,16 +5,14 @@
 use std::collections::HashSet;
 
 use log::info;
-use petgraph::graphmap::DiGraphMap;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::graph::{create_graph, path_with_relationships};
-use crate::{error::SpdxError, graph::find_path};
+use crate::error::SpdxError;
 
 use super::{
     Algorithm, Annotation, DocumentCreationInformation, FileInformation,
-    OtherLicensingInformationDetected, PackageInformation, Relationship, RelationshipType, Snippet,
+    OtherLicensingInformationDetected, PackageInformation, Relationship, Snippet,
 };
 
 /// A representation of an [SPDX Document]
@@ -184,30 +182,13 @@ impl SPDX {
             .filter(|relationship| relationship.related_spdx_element == spdx_id)
             .collect()
     }
-
-    /// Create a graph of the relationships in the SPDX Document.
-    pub fn graph(&self) -> DiGraphMap<&str, &RelationshipType> {
-        create_graph(self)
-    }
-
-    /// Find a path between two SPDX IDs.
-    pub fn find_path_between_spdx_ids(&self, from: &str, to: &str) -> Option<Vec<String>> {
-        let graph = self.graph();
-        let path = find_path(&graph, from, to);
-        path.map(|path| {
-            path_with_relationships(&graph, path.1)
-                .iter()
-                .map(|part| (*part).to_string())
-                .collect()
-        })
-    }
 }
 
 #[cfg(test)]
 mod test {
     use std::fs::read_to_string;
 
-    use crate::models::SPDXExpression;
+    use crate::models::{RelationshipType, SPDXExpression};
 
     use super::*;
 
@@ -326,18 +307,6 @@ mod test {
         let expected_relationships = vec![&relationship_1, &relationship_2, &relationship_3];
 
         assert_eq!(relationships, expected_relationships);
-    }
-
-    #[test]
-    fn find_path_between_ids_works() {
-        let spdx_file: SPDX = serde_json::from_str(
-            &read_to_string("tests/data/SPDXJSONExample-v2.2.spdx.json").unwrap(),
-        )
-        .unwrap();
-        let path = spdx_file
-            .find_path_between_spdx_ids("SPDXRef-DOCUMENT", "SPDXRef-Saxon")
-            .unwrap();
-        dbg!(path);
     }
 
     #[test]
