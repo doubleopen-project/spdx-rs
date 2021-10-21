@@ -103,11 +103,15 @@ mod test_spdx_expression {
         let input_3 =
             SPDXExpression::parse("MIT AND (GPL-2.0-or-later AND ISC) AND BSD-3-Clause").unwrap();
 
-        let mut expected_1 = vec!["MIT".to_string(), "GPL-2.0+".to_string()];
-        let mut expected_2 = vec!["MIT".to_string(), "GPL-2.0+".to_string(), "ISC".to_string()];
+        let mut expected_1 = vec!["MIT".to_string(), "GPL-2.0-or-later".to_string()];
+        let mut expected_2 = vec![
+            "MIT".to_string(),
+            "GPL-2.0-or-later".to_string(),
+            "ISC".to_string(),
+        ];
         let mut expected_3 = vec![
             "MIT".to_string(),
-            "GPL-2.0+".to_string(),
+            "GPL-2.0-or-later".to_string(),
             "ISC".to_string(),
             "BSD-3-Clause".to_string(),
         ];
