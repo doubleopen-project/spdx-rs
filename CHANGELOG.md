@@ -22,9 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Breaking:** Moved the functionality for getting the SPDX License List to a utility crate. See
-  [spdx-toolkit](https://github.com/doublopen-project/spdx-toolkit).
+  [spdx-toolkit](https://github.com/doubleopen-project/spdx-toolkit).
 - **Breaking:** Moved the functionality for for creating graphs from the relationships to a utility
-  crate. See [spdx-toolkit](https://github.com/doublopen-project/spdx-toolkit).
+  crate. See [spdx-toolkit](https://github.com/doubleopen-project/spdx-toolkit).
 
 ## [0.2.1] - 2021-10-14
 
