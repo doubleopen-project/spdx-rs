@@ -157,7 +157,7 @@ impl SPDX {
         let mut license_ids = Vec::new();
 
         for file in &self.file_information {
-            for license in &file.concluded_license.licenses() {
+            for license in &file.concluded_license.licenses()? {
                 if !license_ids.contains(license) && license != "NOASSERTION" && license != "NONE" {
                     license_ids.push(license.clone());
                 }
@@ -228,7 +228,7 @@ mod test {
 
         assert_eq!(
             file.0.concluded_license,
-            SPDXExpression::parse("LicenseRef-1").unwrap()
+            SPDXExpression::new("LicenseRef-1")
         );
     }
 

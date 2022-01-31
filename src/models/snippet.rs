@@ -177,7 +177,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.snippet_information[0].snippet_concluded_license,
-            SPDXExpression::parse("GPL-2.0-only").unwrap()
+            SPDXExpression::new("GPL-2.0-only")
         );
     }
     #[test]

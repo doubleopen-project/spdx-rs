@@ -158,9 +158,9 @@ impl Default for PackageInformation {
             package_checksum: Vec::new(),
             package_home_page: None,
             source_information: None,
-            concluded_license: SPDXExpression::parse("NOASSERTION").unwrap(),
+            concluded_license: SPDXExpression::default(),
             all_licenses_information_from_files: Vec::new(),
-            declared_license: SPDXExpression::parse("NOASSERTION").unwrap(),
+            declared_license: SPDXExpression::default(),
             comments_on_license: None,
             copyright_text: "NOASSERTION".to_string(),
             package_summary_description: None,
@@ -432,7 +432,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.package_information[0].concluded_license,
-            SPDXExpression::parse("(LGPL-2.0-only OR LicenseRef-3)").unwrap()
+            SPDXExpression::new("(LGPL-2.0-only OR LicenseRef-3)")
         );
     }
     #[test]
@@ -459,7 +459,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.package_information[0].declared_license,
-            SPDXExpression::parse("(LGPL-2.0-only AND LicenseRef-3)").unwrap()
+            SPDXExpression::new("(LGPL-2.0-only AND LicenseRef-3)")
         );
     }
     #[test]

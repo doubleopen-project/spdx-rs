@@ -349,7 +349,7 @@ fn process_atom_for_packages(
         }
         Atom::PackageLicenseConcluded(value) => {
             if let Some(package) = &mut package_in_progress {
-                package.concluded_license = SPDXExpression::parse(value)?;
+                package.concluded_license = SPDXExpression::new(value);
             }
         }
         Atom::PackageLicenseInfoFromFiles(value) => {
@@ -361,7 +361,7 @@ fn process_atom_for_packages(
         }
         Atom::PackageLicenseDeclared(value) => {
             if let Some(package) = &mut package_in_progress {
-                package.declared_license = SPDXExpression::parse(value)?;
+                package.declared_license = SPDXExpression::new(value);
             }
         }
         Atom::PackageLicenseComments(value) => {
@@ -462,7 +462,7 @@ fn process_atom_for_files(
         }
         Atom::LicenseConcluded(value) => {
             if let Some(file) = &mut file_in_progress {
-                file.concluded_license = SPDXExpression::parse(value)?;
+                file.concluded_license = SPDXExpression::new(value);
             }
         }
         Atom::LicenseInfoInFile(value) => {
@@ -534,7 +534,7 @@ fn process_atom_for_snippets(
         }
         Atom::SnippetLicenseConcluded(value) => {
             if let Some(snippet) = &mut snippet_in_progress {
-                snippet.snippet_concluded_license = SPDXExpression::parse(value)?;
+                snippet.snippet_concluded_license = SPDXExpression::new(value);
             }
         }
         Atom::LicenseInfoInSnippet(value) => {
@@ -856,6 +856,8 @@ compatible system run time libraries."
         assert_eq!(
             glibc
                 .concluded_license
+                .expression()
+                .unwrap()
                 .requirements()
                 .map(|er| er.req.license.id())
                 .collect::<Vec<_>>(),
@@ -871,6 +873,8 @@ compatible system run time libraries."
         assert_eq!(
             glibc
                 .declared_license
+                .expression()
+                .unwrap()
                 .requirements()
                 .map(|er| er.req.license.id())
                 .collect::<Vec<_>>(),
@@ -944,6 +948,8 @@ This information was found in the COPYING.txt file in the xyz directory.".to_str
         );
         assert_eq!(
             fooc.concluded_license
+                .expression()
+                .unwrap()
                 .requirements()
                 .map(|er| er.req.license.id())
                 .collect::<Vec<_>>(),
@@ -1019,7 +1025,7 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
             .any(|snip| snip.end_pointer == Pointer::new_line(None, 23)));
         assert_eq!(
             snippet.snippet_concluded_license,
-            SPDXExpression::parse("GPL-2.0-only").unwrap()
+            SPDXExpression::new("GPL-2.0-only")
         );
         assert_eq!(snippet.license_information_in_snippet, vec!["GPL-2.0-only"]);
         assert_eq!(snippet.snippet_comments_on_license, Some("The concluded license was taken from package xyz, from which the snippet was copied into the current file. The concluded license information was found in the COPYING.txt file in package xyz.".to_string()));
