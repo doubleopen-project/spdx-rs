@@ -634,10 +634,10 @@ fn process_annotation(
 
 fn process_atom_for_annotations(
     atom: &Atom,
-    mut annotations: &mut Vec<Annotation>,
+    annotations: &mut Vec<Annotation>,
     mut annotation_in_progress: &mut AnnotationInProgress,
 ) -> Result<(), SpdxError> {
-    process_annotation(annotation_in_progress, &mut annotations);
+    process_annotation(annotation_in_progress, annotations);
 
     match atom {
         Atom::Annotator(value) => {

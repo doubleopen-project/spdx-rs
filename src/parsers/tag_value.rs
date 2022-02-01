@@ -377,6 +377,7 @@ fn package_verification_code(
             map(ws(not_line_ending), |v| (v, None)),
         )),
         |(value, exclude)| {
+            #[allow(clippy::option_if_let_else)]
             let excludes = if let Some(exclude) = exclude {
                 vec![exclude.to_string()]
             } else {

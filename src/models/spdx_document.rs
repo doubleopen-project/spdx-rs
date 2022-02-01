@@ -89,7 +89,7 @@ impl SPDX {
                 document_name: name.to_string(),
                 spdx_document_namespace: format!(
                     "http://spdx.org/spdxdocs/{}-{}",
-                    name.to_string(),
+                    name,
                     Uuid::new_v4()
                 ),
                 ..DocumentCreationInformation::default()
