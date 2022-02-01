@@ -13,6 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `SPDXExpression::new` for creating expressions without parsing them. The expression is stored
+  as a plain `String`.
+- Add `SPDXExpression::expression` for parsing the stored `String` to an expression.
+
+### Removed
+
+- **Breaking:** Remove `SPDXExpression::parse`. The `SPDXExpression` is not parsed at creation, but
+  when the expression in parsed format is needed.
+
+### Changed
+
+- **Breaking:** Change `SPDXExpression::licenses` to return `Result` as parsing can fail.
+
 ## [0.3.0] - 2021-10-21
 
 ### Changed
