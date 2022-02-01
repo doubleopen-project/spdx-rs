@@ -113,16 +113,16 @@ fn spdx_from_atoms(atoms: &[Atom]) -> Result<SPDX, SpdxError> {
             &mut package_information,
             &mut package_in_progress,
             &mut external_package_ref_in_progress,
-        )?;
+        );
         process_atom_for_files(
             atom,
             &mut file_in_progress,
             &mut file_information,
             &package_in_progress,
             &mut relationships,
-        )?;
-        process_atom_for_snippets(atom, &mut snippet_information, &mut snippet_in_progress)?;
-        process_atom_for_relationships(atom, &mut relationships, &mut relationship_in_progress)?;
+        );
+        process_atom_for_snippets(atom, &mut snippet_information, &mut snippet_in_progress);
+        process_atom_for_relationships(atom, &mut relationships, &mut relationship_in_progress);
         process_atom_for_annotations(atom, &mut annotations, &mut annotation_in_progress)?;
         process_atom_for_license_info(
             atom,
@@ -279,7 +279,7 @@ fn process_atom_for_packages(
     packages: &mut Vec<PackageInformation>,
     mut package_in_progress: &mut Option<PackageInformation>,
     mut external_package_ref_in_progress: &mut Option<ExternalPackageReference>,
-) -> Result<(), SpdxError> {
+) {
     match atom {
         Atom::PackageName(value) => {
             if let Some(package) = &mut package_in_progress {
@@ -404,8 +404,6 @@ fn process_atom_for_packages(
         }
         _ => {}
     }
-
-    Ok(())
 }
 
 fn process_atom_for_files(
@@ -414,7 +412,7 @@ fn process_atom_for_files(
     files: &mut Vec<FileInformation>,
     package_in_progress: &Option<PackageInformation>,
     relationships: &mut HashSet<Relationship>,
-) -> Result<(), SpdxError> {
+) {
     match atom {
         Atom::PackageName(_) => {
             if let Some(file) = &mut file_in_progress {
@@ -492,14 +490,13 @@ fn process_atom_for_files(
         }
         _ => {}
     }
-    Ok(())
 }
 
 fn process_atom_for_snippets(
     atom: &Atom,
     snippets: &mut Vec<Snippet>,
     mut snippet_in_progress: &mut Option<Snippet>,
-) -> Result<(), SpdxError> {
+) {
     match atom {
         Atom::SnippetSPDXID(value) => {
             if let Some(snippet) = &snippet_in_progress {
@@ -571,7 +568,6 @@ fn process_atom_for_snippets(
         }
         _ => {}
     }
-    Ok(())
 }
 
 #[allow(clippy::unnecessary_wraps)]
@@ -579,7 +575,7 @@ fn process_atom_for_relationships(
     atom: &Atom,
     relationships: &mut HashSet<Relationship>,
     mut relationship_in_progress: &mut Option<Relationship>,
-) -> Result<(), SpdxError> {
+) {
     match atom {
         Atom::Relationship(value) => {
             if let Some(relationship) = relationship_in_progress {
@@ -594,8 +590,6 @@ fn process_atom_for_relationships(
         }
         _ => {}
     }
-
-    Ok(())
 }
 
 #[derive(Debug, Default)]
