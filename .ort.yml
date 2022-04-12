@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2022 HH Partners
+#
+# SPDX-License-Identifier: MIT
+
 excludes:
   paths:
     - pattern: "tests/**"
