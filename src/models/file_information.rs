@@ -10,7 +10,7 @@ use super::{Algorithm, Checksum};
 /// ## File Information
 ///
 /// SPDX's [File Information](https://spdx.github.io/spdx-spec/4-file-information/)
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct FileInformation {
     /// <https://spdx.github.io/spdx-spec/4-file-information/#41-file-name>

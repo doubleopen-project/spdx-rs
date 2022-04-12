@@ -12,7 +12,7 @@ use super::{Checksum, FileInformation};
 /// ## Package Information
 ///
 /// SPDX's [Package Information](https://spdx.github.io/spdx-spec/3-package-information/).
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PackageInformation {
     /// <https://spdx.github.io/spdx-spec/3-package-information/#31-package-name>
