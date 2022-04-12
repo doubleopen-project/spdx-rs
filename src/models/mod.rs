@@ -11,7 +11,6 @@ mod package_information;
 mod relationship;
 mod snippet;
 mod spdx_document;
-mod spdx_expression;
 
 pub use annotation::*;
 pub use checksum::*;

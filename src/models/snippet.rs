@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use serde::{Deserialize, Serialize};
-
-use super::SPDXExpression;
+use spdx_expression::SpdxExpression;
 
 /// <https://spdx.github.io/spdx-spec/5-snippet-information/>
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
@@ -22,7 +21,7 @@ pub struct Snippet {
 
     /// <https://spdx.github.io/spdx-spec/5-snippet-information/#55-snippet-concluded-license>
     #[serde(rename = "licenseConcluded")]
-    pub snippet_concluded_license: SPDXExpression,
+    pub snippet_concluded_license: SpdxExpression,
 
     /// <https://spdx.github.io/spdx-spec/5-snippet-information/#56-license-information-in-snippet>
     #[serde(
@@ -177,7 +176,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.snippet_information[0].snippet_concluded_license,
-            SPDXExpression::new("GPL-2.0-only")
+            SpdxExpression::parse("GPL-2.0-only").unwrap()
         );
     }
     #[test]
