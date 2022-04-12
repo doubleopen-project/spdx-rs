@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 use serde::{Deserialize, Serialize};
+use spdx_expression::SpdxExpression;
 
-use super::{Algorithm, Checksum, SPDXExpression};
+use super::{Algorithm, Checksum};
 
 /// ## File Information
 ///
@@ -29,7 +30,7 @@ pub struct FileInformation {
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#45-concluded-license>
     #[serde(rename = "licenseConcluded")]
-    pub concluded_license: SPDXExpression,
+    pub concluded_license: SpdxExpression,
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#46-license-information-in-file>
     #[serde(rename = "licenseInfoInFiles")]
@@ -79,7 +80,7 @@ impl Default for FileInformation {
             file_spdx_identifier: "NOASSERTION".to_string(),
             file_type: Vec::new(),
             file_checksum: Vec::new(),
-            concluded_license: SPDXExpression::new("NOASSERTION"),
+            concluded_license: SpdxExpression::parse("NOASSERTION").expect("will always succeed"),
             license_information_in_file: Vec::new(),
             comments_on_license: None,
             copyright_text: "NOASSERTION".to_string(),
@@ -147,7 +148,7 @@ mod test {
     use std::fs::read_to_string;
 
     use super::*;
-    use crate::models::{Checksum, FileType, SPDXExpression, SPDX};
+    use crate::models::{Checksum, FileType, SPDX};
 
     #[test]
     fn checksum_equality() {
@@ -240,7 +241,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.file_information[0].concluded_license,
-            SPDXExpression::new("Apache-2.0")
+            SpdxExpression::parse("Apache-2.0").unwrap()
         );
     }
     #[test]

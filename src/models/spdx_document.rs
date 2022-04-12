@@ -8,8 +8,6 @@ use log::info;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::error::SpdxError;
-
 use super::{
     Algorithm, Annotation, DocumentCreationInformation, FileInformation,
     OtherLicensingInformationDetected, PackageInformation, Relationship, Snippet,
@@ -151,20 +149,20 @@ impl SPDX {
     /// # Errors
     ///
     /// Returns [`SpdxError`] if parsing of the expressions fails.
-    pub fn get_license_ids(&self) -> Result<Vec<String>, SpdxError> {
+    pub fn get_license_ids(&self) -> HashSet<String> {
         info!("Getting all license identifiers from SPDX.");
 
-        let mut license_ids = Vec::new();
+        let mut license_ids = HashSet::new();
 
         for file in &self.file_information {
-            for license in &file.concluded_license.licenses()? {
-                if !license_ids.contains(license) && license != "NOASSERTION" && license != "NONE" {
-                    license_ids.push(license.clone());
+            for license in &file.concluded_license.identifiers() {
+                if license != "NOASSERTION" && license != "NONE" {
+                    license_ids.insert(license.clone());
                 }
             }
         }
 
-        Ok(license_ids)
+        license_ids
     }
 
     /// Get all relationships where the given SPDX ID is the SPDX element id.
@@ -186,9 +184,11 @@ impl SPDX {
 
 #[cfg(test)]
 mod test {
-    use std::fs::read_to_string;
+    use std::{fs::read_to_string, iter::FromIterator};
 
-    use crate::models::{RelationshipType, SPDXExpression};
+    use spdx_expression::SpdxExpression;
+
+    use crate::models::RelationshipType;
 
     use super::*;
 
@@ -228,7 +228,7 @@ mod test {
 
         assert_eq!(
             file.0.concluded_license,
-            SPDXExpression::new("LicenseRef-1")
+            SpdxExpression::parse("LicenseRef-1").unwrap()
         );
     }
 
@@ -239,16 +239,14 @@ mod test {
         )
         .unwrap();
 
-        let mut actual = spdx_file.get_license_ids().unwrap();
-        actual.sort();
+        let actual = spdx_file.get_license_ids();
 
-        let mut expected: Vec<String> = vec![
+        let expected = HashSet::from_iter([
             "Apache-2.0".into(),
             "LicenseRef-1".into(),
-            "LGPL-2.0".into(),
+            "LGPL-2.0-only".into(),
             "LicenseRef-2".into(),
-        ];
-        expected.sort();
+        ]);
 
         assert_eq!(expected, actual);
     }

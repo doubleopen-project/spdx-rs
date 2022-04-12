@@ -3,10 +3,11 @@
 // SPDX-License-Identifier: MIT
 
 use serde::{Deserialize, Serialize};
+use spdx_expression::SpdxExpression;
 
 use super::Annotation;
 
-use super::{Checksum, FileInformation, SPDXExpression};
+use super::{Checksum, FileInformation};
 
 /// ## Package Information
 ///
@@ -76,7 +77,7 @@ pub struct PackageInformation {
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#313-concluded-license>
     #[serde(rename = "licenseConcluded")]
-    pub concluded_license: SPDXExpression,
+    pub concluded_license: SpdxExpression,
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#314-all-licenses-information-from-files>
     #[serde(
@@ -88,7 +89,7 @@ pub struct PackageInformation {
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#315-declared-license>
     #[serde(rename = "licenseDeclared")]
-    pub declared_license: SPDXExpression,
+    pub declared_license: SpdxExpression,
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#316-comments-on-license>
     #[serde(
@@ -158,9 +159,9 @@ impl Default for PackageInformation {
             package_checksum: Vec::new(),
             package_home_page: None,
             source_information: None,
-            concluded_license: SPDXExpression::default(),
+            concluded_license: SpdxExpression::parse("NONE").expect("will always succeed"),
             all_licenses_information_from_files: Vec::new(),
-            declared_license: SPDXExpression::default(),
+            declared_license: SpdxExpression::parse("NONE").expect("will always succeed"),
             comments_on_license: None,
             copyright_text: "NOASSERTION".to_string(),
             package_summary_description: None,
@@ -432,7 +433,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.package_information[0].concluded_license,
-            SPDXExpression::new("(LGPL-2.0-only OR LicenseRef-3)")
+            SpdxExpression::parse("(LGPL-2.0-only OR LicenseRef-3)").unwrap()
         );
     }
     #[test]
@@ -459,7 +460,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.package_information[0].declared_license,
-            SPDXExpression::new("(LGPL-2.0-only AND LicenseRef-3)")
+            SpdxExpression::parse("(LGPL-2.0-only AND LicenseRef-3)").unwrap()
         );
     }
     #[test]

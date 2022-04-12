@@ -28,13 +28,14 @@
 use std::collections::HashSet;
 
 use chrono::{DateTime, Utc};
+use spdx_expression::SpdxExpression;
 
 use crate::{
     error::SpdxError,
     models::{
         Annotation, AnnotationType, DocumentCreationInformation, ExternalPackageReference,
         FileInformation, OtherLicensingInformationDetected, PackageInformation, Pointer, Range,
-        Relationship, SPDXExpression, Snippet, SPDX,
+        Relationship, Snippet, SPDX,
     },
     parsers::tag_value::{atoms, Atom},
 };
@@ -349,7 +350,7 @@ fn process_atom_for_packages(
         }
         Atom::PackageLicenseConcluded(value) => {
             if let Some(package) = &mut package_in_progress {
-                package.concluded_license = SPDXExpression::new(value);
+                package.concluded_license = SpdxExpression::parse(value).unwrap();
             }
         }
         Atom::PackageLicenseInfoFromFiles(value) => {
@@ -361,7 +362,7 @@ fn process_atom_for_packages(
         }
         Atom::PackageLicenseDeclared(value) => {
             if let Some(package) = &mut package_in_progress {
-                package.declared_license = SPDXExpression::new(value);
+                package.declared_license = SpdxExpression::parse(value).unwrap();
             }
         }
         Atom::PackageLicenseComments(value) => {
@@ -460,7 +461,7 @@ fn process_atom_for_files(
         }
         Atom::LicenseConcluded(value) => {
             if let Some(file) = &mut file_in_progress {
-                file.concluded_license = SPDXExpression::new(value);
+                file.concluded_license = SpdxExpression::parse(value).unwrap();
             }
         }
         Atom::LicenseInfoInFile(value) => {
@@ -531,7 +532,7 @@ fn process_atom_for_snippets(
         }
         Atom::SnippetLicenseConcluded(value) => {
             if let Some(snippet) = &mut snippet_in_progress {
-                snippet.snippet_concluded_license = SPDXExpression::new(value);
+                snippet.snippet_concluded_license = SpdxExpression::parse(value).unwrap();
             }
         }
         Atom::LicenseInfoInSnippet(value) => {
@@ -708,7 +709,7 @@ fn process_atom_for_license_info(
 #[cfg(test)]
 #[allow(clippy::too_many_lines)]
 mod test_super {
-    use std::fs::read_to_string;
+    use std::{fs::read_to_string, iter::FromIterator};
 
     use chrono::TimeZone;
 
@@ -848,34 +849,16 @@ compatible system run time libraries."
             Some("uses glibc-2_11-branch from git://sourceware.org/git/glibc.git.".to_string())
         );
         assert_eq!(
-            glibc
-                .concluded_license
-                .expression()
-                .unwrap()
-                .requirements()
-                .map(|er| er.req.license.id())
-                .collect::<Vec<_>>(),
-            vec![
-                spdx::license_id("LGPL-2.0"),
-                spdx::license_id("LicenseRef-3"),
-            ]
+            glibc.concluded_license.identifiers(),
+            HashSet::from_iter(["LGPL-2.0-only".to_string(), "LicenseRef-3".to_string()])
         );
         assert_eq!(
             glibc.all_licenses_information_from_files,
             vec!["GPL-2.0-only", "LicenseRef-2", "LicenseRef-1"]
         );
         assert_eq!(
-            glibc
-                .declared_license
-                .expression()
-                .unwrap()
-                .requirements()
-                .map(|er| er.req.license.id())
-                .collect::<Vec<_>>(),
-            vec![
-                spdx::license_id("LGPL-2.0"),
-                spdx::license_id("LicenseRef-3"),
-            ]
+            glibc.declared_license.identifiers(),
+            HashSet::from_iter(["LGPL-2.0-only".to_string(), "LicenseRef-3".to_string()])
         );
         assert_eq!(glibc.comments_on_license, Some("The license for this project changed with the release of version x.y.  The version of the project included here post-dates the license change.".to_string()));
         assert_eq!(glibc.copyright_text, "Copyright 2008-2010 John Smith");
@@ -941,16 +924,8 @@ This information was found in the COPYING.txt file in the xyz directory.".to_str
             ]
         );
         assert_eq!(
-            fooc.concluded_license
-                .expression()
-                .unwrap()
-                .requirements()
-                .map(|er| er.req.license.id())
-                .collect::<Vec<_>>(),
-            vec![
-                spdx::license_id("LGPL-2.0"),
-                spdx::license_id("LicenseRef-2"),
-            ]
+            fooc.concluded_license.identifiers(),
+            HashSet::from_iter(["LGPL-2.0-only".to_string(), "LicenseRef-2".to_string(),])
         );
         assert_eq!(
             fooc.license_information_in_file,
@@ -1019,7 +994,7 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
             .any(|snip| snip.end_pointer == Pointer::new_line(None, 23)));
         assert_eq!(
             snippet.snippet_concluded_license,
-            SPDXExpression::new("GPL-2.0-only")
+            SpdxExpression::parse("GPL-2.0-only").unwrap()
         );
         assert_eq!(snippet.license_information_in_snippet, vec!["GPL-2.0-only"]);
         assert_eq!(snippet.snippet_comments_on_license, Some("The concluded license was taken from package xyz, from which the snippet was copied into the current file. The concluded license information was found in the COPYING.txt file in package xyz.".to_string()));
