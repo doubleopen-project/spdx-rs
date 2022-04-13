@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2022-04-13
+
 ### Changed
 
 - **Breaking:** Change field `license_information_in_file` of `FileInformation` to be a
@@ -56,7 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Started following semantic versioning and keeping a changelog.
 
-[unreleased]: https://github.com/doubleopen-project/spdx-rs/compare/v0.4.1...HEAD
+[unreleased]: https://github.com/doubleopen-project/spdx-rs/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/doubleopen-project/spdx-rs/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/doubleopen-project/spdx-rs/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/doubleopen-project/spdx-rs/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/doubleopen-project/spdx-rs/compare/v0.2.1...v0.3.0
