@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** Change field `license_information_in_file` of `FileInformation` to be a
+  `Vec<SimpleExpression>` instead of a `Vec<String>`.
+
 ## [0.4.1] - 2022-04-12
 
 ### Added

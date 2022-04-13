@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use serde::{Deserialize, Serialize};
-use spdx_expression::SpdxExpression;
+use spdx_expression::{SimpleExpression, SpdxExpression};
 
 use super::{Algorithm, Checksum};
 
@@ -34,7 +34,7 @@ pub struct FileInformation {
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#46-license-information-in-file>
     #[serde(rename = "licenseInfoInFiles")]
-    pub license_information_in_file: Vec<String>,
+    pub license_information_in_file: Vec<SimpleExpression>,
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#47-comments-on-license>
     #[serde(
@@ -252,7 +252,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.file_information[0].license_information_in_file,
-            vec!["Apache-2.0".to_string()]
+            vec![SimpleExpression::parse("Apache-2.0").unwrap()]
         );
     }
     #[test]
