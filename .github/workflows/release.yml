@@ -6,62 +6,29 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 jobs:
-  Test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        name: Checkout
-      - uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/cargo@v1
-        name: Cargo build
-        if: always()
-        id: build
-        with:
-          command: test
-          args: --no-run
-      - uses: actions-rs/cargo@v1
-        name: Cargo test
-        if: always()
-        id: test
-        with:
-          command: test 
-          args: -- --include-ignored
-      - uses: actions-rs/cargo@v1
-        name: Cargo clippy
-        if: always()
-        id: clippy
-        with:
-          command: clippy
-          args: -- -D warnings
-      - uses: actions-rs/cargo@v1
-        name: Cargo fmt
-        if: always()
-        id: format
-        with:
-          command: fmt
-          args: --all -- --check
-
-  Reuse:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: REUSE Compliance Check
-        uses: fsfe/reuse-action@v1
-
   Release:
-    needs: ["Test", "Reuse"]
     runs-on: ubuntu-latest
     steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          release-type: rust
+          package-name: spdx-rs
+          bump-minor-pre-major: true
+          bump-patch-for-minor-pre-major: true
+          pull-request-title-pattern: "chore: release ${version}"
       - uses: actions/checkout@v2
+        if: ${{ steps.release.outputs.release_created }}
       - uses: actions-rs/toolchain@v1
+        if: ${{ steps.release.outputs.release_created }}
         with:
           toolchain: stable
           override: true
       - uses: katyo/publish-crates@v1
+        if: ${{ steps.release.outputs.release_created }}
         with:
           registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
