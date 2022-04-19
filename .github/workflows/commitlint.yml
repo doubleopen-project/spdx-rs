@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2022 HH Partners
+#
+# SPDX-License-Identifier: MIT
+
+name: commitlint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Lint commits
+        uses: wagoid/commitlint-github-action@v4
