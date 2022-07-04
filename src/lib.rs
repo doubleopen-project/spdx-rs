@@ -8,7 +8,8 @@
     clippy::must_use_candidate,
     clippy::module_name_repetitions,
     clippy::non_ascii_literal,
-    clippy::missing_const_for_fn
+    clippy::missing_const_for_fn,
+    clippy::use_self
 )]
 
 pub mod error;
