@@ -6,6 +6,13 @@ SPDX-License-Identifier: MIT
 
 # Changelog
 
+## [0.5.1](https://github.com/doubleopen-project/spdx-rs/compare/v0.5.0...v0.5.1) (2022-07-05)
+
+
+### Miscellaneous Chores
+
+* release 0.5.1 ([3cda72b](https://github.com/doubleopen-project/spdx-rs/commit/3cda72b8264d3ffd6576f80febdc1d0845ab2650))
+
 ## [0.5.0] - 2022-04-13
 
 ### Changed
