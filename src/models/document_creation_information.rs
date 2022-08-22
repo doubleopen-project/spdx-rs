@@ -10,7 +10,7 @@ use super::Checksum;
 /// ## Document Creation Information
 ///
 /// SPDX's [Document Creation Information](https://spdx.github.io/spdx-spec/2-document-creation-information/)
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentCreationInformation {
     /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#21-spdx-version>
@@ -69,7 +69,7 @@ impl Default for DocumentCreationInformation {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct CreationInfo {
     /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#27-license-list-version>
@@ -104,7 +104,7 @@ impl Default for CreationInfo {
 }
 
 /// <https://spdx.github.io/spdx-spec/2-document-creation-information/#26-external-document-references>
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd)]
 pub struct ExternalDocumentReference {
     /// Unique ID string of the reference.
     #[serde(rename = "externalDocumentId")]

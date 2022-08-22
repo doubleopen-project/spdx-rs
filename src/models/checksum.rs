@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 /// and
 /// [File Checksum](https://spdx.github.io/spdx-spec/4-file-information/#44-file-checksum).
 /// According to the spec, SHA1 is mandatory but we don't currently enforce that.
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone)]
 pub struct Checksum {
     /// Algorithm used to calculate the checksum
     pub algorithm: Algorithm,
@@ -32,7 +32,7 @@ impl Checksum {
 /// Possible algorithms to be used for SPDX's
 /// [package checksum](https://spdx.github.io/spdx-spec/3-package-information/#310-package-checksum)
 /// and [file checksum](https://spdx.github.io/spdx-spec/4-file-information/#44-file-checksum).
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Copy)]
 pub enum Algorithm {
     SHA1,
     SHA224,

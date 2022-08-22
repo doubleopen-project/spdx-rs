@@ -10,7 +10,7 @@ use super::{Algorithm, Checksum};
 /// ## File Information
 ///
 /// SPDX's [File Information](https://spdx.github.io/spdx-spec/4-file-information/)
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct FileInformation {
     /// <https://spdx.github.io/spdx-spec/4-file-information/#41-file-name>
@@ -127,7 +127,7 @@ impl FileInformation {
 }
 
 /// <https://spdx.github.io/spdx-spec/4-file-information/#43-file-type>
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Copy)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum FileType {
     Source,

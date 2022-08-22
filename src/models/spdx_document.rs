@@ -37,7 +37,7 @@ use super::{
 /// [Serde]: https://serde.rs
 /// [review information]: https://spdx.github.io/spdx-spec/review-information-deprecated/
 /// [tag-value format]: https://spdx.github.io/spdx-spec/conformance/
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SPDX {
     /// <https://spdx.github.io/spdx-spec/2-document-creation-information/>

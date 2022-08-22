@@ -12,7 +12,7 @@ use super::{Checksum, FileInformation};
 /// ## Package Information
 ///
 /// SPDX's [Package Information](https://spdx.github.io/spdx-spec/3-package-information/).
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PackageInformation {
     /// <https://spdx.github.io/spdx-spec/3-package-information/#31-package-name>
@@ -203,7 +203,7 @@ impl PackageInformation {
 }
 
 /// <https://spdx.github.io/spdx-spec/3-package-information/#39-package-verification-code>
-#[derive(Debug, Serialize, Deserialize, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone)]
 pub struct PackageVerificationCode {
     /// Value of the verification code.
     #[serde(rename = "packageVerificationCodeValue")]
@@ -225,7 +225,7 @@ impl PackageVerificationCode {
 }
 
 /// <https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference>
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalPackageReference {
     pub reference_category: ExternalPackageReferenceCategory,
@@ -254,7 +254,7 @@ impl ExternalPackageReference {
 }
 
 /// <https://spdx.github.io/spdx-spec/3-package-information/#321-external-reference>
-#[derive(Serialize, Deserialize, Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Clone)]
 #[serde(rename_all = "SCREAMING-KEBAB-CASE")]
 pub enum ExternalPackageReferenceCategory {
     Security,

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use spdx_expression::SpdxExpression;
 
 /// <https://spdx.github.io/spdx-spec/5-snippet-information/>
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Default)]
 pub struct Snippet {
     /// <https://spdx.github.io/spdx-spec/5-snippet-information/#51-snippet-spdx-identifier>
     #[serde(rename = "SPDXID")]
@@ -61,7 +61,7 @@ pub struct Snippet {
 }
 
 /// <https://spdx.github.io/spdx-spec/5-snippet-information/#53-snippet-byte-range>
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Range {
     pub start_pointer: Pointer,
@@ -77,7 +77,7 @@ impl Range {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(untagged)]
 pub enum Pointer {
     Byte {
