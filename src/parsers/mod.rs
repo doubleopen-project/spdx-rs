@@ -777,7 +777,7 @@ mod test_super {
             .contains(&"Person: Jane Doe ()".to_string()));
         assert_eq!(
             document_creation_information.creation_info.created,
-            Utc.ymd(2010, 1, 29).and_hms(18, 30, 22)
+            Utc.with_ymd_and_hms(2010, 1, 29, 18, 30, 22).unwrap()
         );
         assert_eq!(
             document_creation_information.creation_info.creator_comment,
@@ -1050,7 +1050,7 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
             annotations[2],
             Annotation::new(
                 "Person: Suzanne Reviewer".to_string(),
-                Utc.ymd(2011, 3, 13).and_hms(0, 0, 0),
+                Utc.with_ymd_and_hms(2011, 3, 13, 0, 0, 0).unwrap(),
                 AnnotationType::Review,
                 Some("SPDXRef-DOCUMENT".to_string()),
                 "Another example reviewer.".to_string()

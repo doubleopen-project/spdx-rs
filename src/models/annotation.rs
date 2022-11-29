@@ -84,7 +84,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx_file.annotations[0].annotation_date,
-            Utc.ymd(2010, 1, 29).and_hms(18, 30, 22)
+            Utc.with_ymd_and_hms(2010, 1, 29, 18, 30, 22).unwrap()
         );
     }
 
