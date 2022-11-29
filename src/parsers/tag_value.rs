@@ -273,7 +273,7 @@ fn file_type(i: &str) -> IResult<&str, FileType, VerboseError<&str>> {
     }
 }
 
-fn document_ref<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
+fn document_ref(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
     preceded(tag("DocumentRef-"), ws(idstring))(i)
 }
 
@@ -395,7 +395,7 @@ fn range(i: &str) -> IResult<&str, (i32, i32), VerboseError<&str>> {
     )(i)
 }
 
-fn idstring<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
+fn idstring(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
     take_while(|c: char| c.is_alphanum() || c == '.' || c == '-' || c == '+')(i)
 }
 
@@ -427,7 +427,7 @@ fn tv_comment(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
     })(i)
 }
 
-fn tag_value<'a>(i: &'a str) -> IResult<&'a str, (&str, &str), VerboseError<&'a str>> {
+fn tag_value(i: &str) -> IResult<&str, (&str, &str), VerboseError<&str>> {
     separated_pair(
         ws(alphanumeric0),
         tag(":"),
@@ -435,7 +435,7 @@ fn tag_value<'a>(i: &'a str) -> IResult<&'a str, (&str, &str), VerboseError<&'a 
     )(i)
 }
 
-fn multiline_text<'a>(i: &'a str) -> IResult<&'a str, &str, VerboseError<&'a str>> {
+fn multiline_text(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
     delimited(tag("<text>"), take_until("</text>"), tag("</text>"))(i)
 }
 
