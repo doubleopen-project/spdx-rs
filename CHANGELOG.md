@@ -6,6 +6,15 @@ SPDX-License-Identifier: MIT
 
 # Changelog
 
+## [0.5.2](https://github.com/doubleopen-project/spdx-rs/compare/v0.5.1...v0.5.2) (2022-12-01)
+
+
+### Bug Fixes
+
+* disable default features of chrono to avoid security vuln ([370c25c](https://github.com/doubleopen-project/spdx-rs/commit/370c25c4580b6d7da915f0ce6c38b34c07565c6f))
+* remove needless lifetimes ([151a7c7](https://github.com/doubleopen-project/spdx-rs/commit/151a7c76a12c8553f204adfb37a3e2e7fa281160))
+* replace deprecated chrono usage ([dc29e99](https://github.com/doubleopen-project/spdx-rs/commit/dc29e99902df10d493cc42fb5f3887e7a99d3fce))
+
 ## [0.5.1](https://github.com/doubleopen-project/spdx-rs/compare/v0.5.0...v0.5.1) (2022-07-05)
 
 
