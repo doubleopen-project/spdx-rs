@@ -60,6 +60,10 @@ pub(super) enum Atom {
     ExternalRef(ExternalPackageReference),
     ExternalRefComment(String),
     PackageAttributionText(String),
+    PrimaryPackagePurpose(String),
+    BuiltDate(String),
+    ReleaseDate(String),
+    ValidUntilDate(String),
 
     // File Information
     FileName(String),
@@ -168,6 +172,10 @@ fn tag_value_to_atom(i: &str) -> IResult<&str, Atom, VerboseError<&str>> {
         )),
         "ExternalRefComment" => Ok((i, Atom::ExternalRefComment(key_value.1.to_string()))),
         "PackageAttributionText" => Ok((i, Atom::PackageAttributionText(key_value.1.to_string()))),
+        "PrimaryPackagePurpose" => Ok((i, Atom::PrimaryPackagePurpose(key_value.1.to_string()))),
+        "BuiltDate" => Ok((i, Atom::BuiltDate(key_value.1.to_string()))),
+        "ReleaseDate" => Ok((i, Atom::ReleaseDate(key_value.1.to_string()))),
+        "ValidUntilDate" => Ok((i, Atom::ValidUntilDate(key_value.1.to_string()))),
 
         // File Information
         "FileName" => Ok((i, Atom::FileName(key_value.1.to_string()))),
@@ -329,6 +337,8 @@ fn relationship(i: &str) -> IResult<&str, Relationship, VerboseError<&str>> {
                 "AMENDS" => RelationshipType::Amends,
                 "PREREQUISITE_FOR" => RelationshipType::PrerequisiteFor,
                 "HAS_PREREQUISITE" => RelationshipType::HasPrerequisite,
+                "SPECIFICATION_FOR" => RelationshipType::SpecificationFor,
+                "REQUIREMENT_DESCRIPTION_FOR" => RelationshipType::RequirementDescriptionFor,
                 "OTHER" => RelationshipType::Other,
                 // TODO: Proper error.
                 _ => {
@@ -413,6 +423,14 @@ fn checksum(i: &str) -> IResult<&str, Checksum, VerboseError<&str>> {
                 "MD4" => Algorithm::MD4,
                 "MD5" => Algorithm::MD5,
                 "MD6" => Algorithm::MD6,
+                "SHA3-256" => Algorithm::SHA3256,
+                "SHA3-384" => Algorithm::SHA3384,
+                "SHA3-512" => Algorithm::SHA3512,
+                "BLAKE2b-256" => Algorithm::BLAKE2B256,
+                "BLAKE2b-384" => Algorithm::BLAKE2B384,
+                "BLAKE2b-512" => Algorithm::BLAKE2B512,
+                "BLAKE3" => Algorithm::BLAKE3,
+                "ADLER32" => Algorithm::ADLER32,
                 // TODO: Use proper error.
                 _ => todo!(),
             };

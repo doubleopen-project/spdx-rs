@@ -29,11 +29,19 @@ pub struct FileInformation {
     pub file_checksum: Vec<Checksum>,
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#45-concluded-license>
-    #[serde(rename = "licenseConcluded")]
-    pub concluded_license: SpdxExpression,
+    #[serde(
+        rename = "licenseConcluded",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub concluded_license: Option<SpdxExpression>,
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#46-license-information-in-file>
-    #[serde(rename = "licenseInfoInFiles")]
+    #[serde(
+        rename = "licenseInfoInFiles",
+        skip_serializing_if = "Vec::is_empty",
+        default
+    )]
     pub license_information_in_file: Vec<SimpleExpression>,
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#47-comments-on-license>
@@ -45,7 +53,12 @@ pub struct FileInformation {
     pub comments_on_license: Option<String>,
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#48-copyright-text>
-    pub copyright_text: String,
+    #[serde(
+        rename = "copyrightText",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub copyright_text: Option<String>,
 
     /// <https://spdx.github.io/spdx-spec/4-file-information/#412-file-comment>
     #[serde(rename = "comment", skip_serializing_if = "Option::is_none", default)]
@@ -80,10 +93,10 @@ impl Default for FileInformation {
             file_spdx_identifier: "NOASSERTION".to_string(),
             file_type: Vec::new(),
             file_checksum: Vec::new(),
-            concluded_license: SpdxExpression::parse("NOASSERTION").expect("will always succeed"),
+            concluded_license: None,
             license_information_in_file: Vec::new(),
             comments_on_license: None,
-            copyright_text: "NOASSERTION".to_string(),
+            copyright_text: None,
             file_comment: None,
             file_notice: None,
             file_contributor: Vec::new(),
@@ -98,7 +111,7 @@ impl FileInformation {
         *id += 1;
         Self {
             file_name: name.to_string(),
-            file_spdx_identifier: format!("SPDXRef-{}", id),
+            file_spdx_identifier: format!("SPDXRef-{id}"),
             ..Self::default()
         }
     }
@@ -241,7 +254,7 @@ mod test {
         .unwrap();
         assert_eq!(
             spdx.file_information[0].concluded_license,
-            SpdxExpression::parse("Apache-2.0").unwrap()
+            Some(SpdxExpression::parse("Apache-2.0").unwrap())
         );
     }
     #[test]
@@ -273,7 +286,11 @@ mod test {
         )
         .unwrap();
         assert_eq!(
-            spdx.file_information[0].copyright_text,
+            spdx.file_information[0]
+                .copyright_text
+                .as_ref()
+                .unwrap()
+                .clone(),
             "Copyright 2010, 2011 Source Auditor Inc.".to_string()
         );
     }

@@ -155,9 +155,11 @@ impl SPDX {
         let mut license_ids = HashSet::new();
 
         for file in &self.file_information {
-            for license in &file.concluded_license.identifiers() {
-                if license != "NOASSERTION" && license != "NONE" {
-                    license_ids.insert(license.clone());
+            if let Some(concluded_license) = &file.concluded_license {
+                for license in concluded_license.identifiers() {
+                    if license != "NOASSERTION" && license != "NONE" {
+                        license_ids.insert(license.clone());
+                    }
                 }
             }
         }
@@ -228,7 +230,7 @@ mod test {
 
         assert_eq!(
             file.0.concluded_license,
-            SpdxExpression::parse("LicenseRef-1").unwrap()
+            Some(SpdxExpression::parse("LicenseRef-1").unwrap())
         );
     }
 
