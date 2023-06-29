@@ -6,6 +6,13 @@ SPDX-License-Identifier: MIT
 
 # Changelog
 
+## [0.5.3](https://github.com/doubleopen-project/spdx-rs/compare/v0.5.2...v0.5.3) (2023-06-29)
+
+
+### Features
+
+* add support for SPDX 2.3 documents ([10e67cb](https://github.com/doubleopen-project/spdx-rs/commit/10e67cb1f2af7bbfa04ecf1af254264b5f5c1cfa))
+
 ## [0.5.2](https://github.com/doubleopen-project/spdx-rs/compare/v0.5.1...v0.5.2) (2022-12-01)
 
 
