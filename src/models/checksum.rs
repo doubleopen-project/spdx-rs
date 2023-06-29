@@ -43,4 +43,18 @@ pub enum Algorithm {
     MD4,
     MD5,
     MD6,
+    #[serde(rename = "SHA3-256")]
+    SHA3256,
+    #[serde(rename = "SHA3-384")]
+    SHA3384,
+    #[serde(rename = "SHA3-512")]
+    SHA3512,
+    #[serde(rename = "BLAKE2b-256")]
+    BLAKE2B256,
+    #[serde(rename = "BLAKE2b-384")]
+    BLAKE2B384,
+    #[serde(rename = "BLAKE2b-512")]
+    BLAKE2B512,
+    BLAKE3,
+    ADLER32,
 }

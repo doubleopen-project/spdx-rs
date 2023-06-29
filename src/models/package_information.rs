@@ -76,8 +76,12 @@ pub struct PackageInformation {
     pub source_information: Option<String>,
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#313-concluded-license>
-    #[serde(rename = "licenseConcluded")]
-    pub concluded_license: SpdxExpression,
+    #[serde(
+        rename = "licenseConcluded",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub concluded_license: Option<SpdxExpression>,
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#314-all-licenses-information-from-files>
     #[serde(
@@ -88,8 +92,12 @@ pub struct PackageInformation {
     pub all_licenses_information_from_files: Vec<String>,
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#315-declared-license>
-    #[serde(rename = "licenseDeclared")]
-    pub declared_license: SpdxExpression,
+    #[serde(
+        rename = "licenseDeclared",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub declared_license: Option<SpdxExpression>,
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#316-comments-on-license>
     #[serde(
@@ -100,7 +108,12 @@ pub struct PackageInformation {
     pub comments_on_license: Option<String>,
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#317-copyright-text>
-    pub copyright_text: String,
+    #[serde(
+        rename = "copyrightText",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub copyright_text: Option<String>,
 
     /// <https://spdx.github.io/spdx-spec/3-package-information/#318-package-summary-description>
     #[serde(rename = "summary", skip_serializing_if = "Option::is_none", default)]
@@ -142,6 +155,30 @@ pub struct PackageInformation {
 
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub annotations: Vec<Annotation>,
+
+    #[serde(rename = "builtDate", skip_serializing_if = "Option::is_none", default)]
+    pub built_date: Option<String>,
+
+    #[serde(
+        rename = "releaseDate",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub release_date: Option<String>,
+
+    #[serde(
+        rename = "validUntilDate",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub valid_until_date: Option<String>,
+
+    #[serde(
+        rename = "primaryPackagePurpose",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub primary_package_purpose: Option<PrimaryPackagePurpose>,
 }
 
 impl Default for PackageInformation {
@@ -159,11 +196,11 @@ impl Default for PackageInformation {
             package_checksum: Vec::new(),
             package_home_page: None,
             source_information: None,
-            concluded_license: SpdxExpression::parse("NONE").expect("will always succeed"),
+            concluded_license: None,
             all_licenses_information_from_files: Vec::new(),
-            declared_license: SpdxExpression::parse("NONE").expect("will always succeed"),
+            declared_license: None,
             comments_on_license: None,
-            copyright_text: "NOASSERTION".to_string(),
+            copyright_text: None,
             package_summary_description: None,
             package_detailed_description: None,
             package_comment: None,
@@ -171,6 +208,10 @@ impl Default for PackageInformation {
             package_attribution_text: Vec::new(),
             files: Vec::new(),
             annotations: Vec::new(),
+            built_date: None,
+            release_date: None,
+            valid_until_date: None,
+            primary_package_purpose: None,
         }
     }
 }
@@ -181,7 +222,7 @@ impl PackageInformation {
         *id += 1;
         Self {
             package_name: name.to_string(),
-            package_spdx_identifier: format!("SPDXRef-{}", id),
+            package_spdx_identifier: format!("SPDXRef-{id}"),
             ..Self::default()
         }
     }
@@ -260,6 +301,23 @@ pub enum ExternalPackageReferenceCategory {
     Security,
     PackageManager,
     PersistentID,
+    Other,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
+#[serde(rename_all = "SCREAMING-KEBAB-CASE")]
+pub enum PrimaryPackagePurpose {
+    Application,
+    Framework,
+    Library,
+    Container,
+    OperatingSystem,
+    Device,
+    Firmware,
+    Source,
+    Archive,
+    File,
+    Install,
     Other,
 }
 
@@ -432,7 +490,11 @@ mod test {
         )
         .unwrap();
         assert_eq!(
-            spdx.package_information[0].concluded_license,
+            spdx.package_information[0]
+                .concluded_license
+                .as_ref()
+                .unwrap()
+                .clone(),
             SpdxExpression::parse("(LGPL-2.0-only OR LicenseRef-3)").unwrap()
         );
     }
@@ -459,7 +521,11 @@ mod test {
         )
         .unwrap();
         assert_eq!(
-            spdx.package_information[0].declared_license,
+            spdx.package_information[0]
+                .declared_license
+                .as_ref()
+                .unwrap()
+                .clone(),
             SpdxExpression::parse("(LGPL-2.0-only AND LicenseRef-3)").unwrap()
         );
     }
@@ -481,7 +547,11 @@ mod test {
         )
         .unwrap();
         assert_eq!(
-            spdx.package_information[0].copyright_text,
+            spdx.package_information[0]
+                .copyright_text
+                .as_ref()
+                .unwrap()
+                .clone(),
             "Copyright 2008-2010 John Smith".to_string()
         );
     }

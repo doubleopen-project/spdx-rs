@@ -350,7 +350,7 @@ fn process_atom_for_packages(
         }
         Atom::PackageLicenseConcluded(value) => {
             if let Some(package) = &mut package_in_progress {
-                package.concluded_license = SpdxExpression::parse(value).unwrap();
+                package.concluded_license = Some(SpdxExpression::parse(value).unwrap());
             }
         }
         Atom::PackageLicenseInfoFromFiles(value) => {
@@ -362,7 +362,7 @@ fn process_atom_for_packages(
         }
         Atom::PackageLicenseDeclared(value) => {
             if let Some(package) = &mut package_in_progress {
-                package.declared_license = SpdxExpression::parse(value).unwrap();
+                package.declared_license = Some(SpdxExpression::parse(value).unwrap());
             }
         }
         Atom::PackageLicenseComments(value) => {
@@ -372,7 +372,7 @@ fn process_atom_for_packages(
         }
         Atom::PackageCopyrightText(value) => {
             if let Some(package) = &mut package_in_progress {
-                package.copyright_text = value.clone();
+                package.copyright_text = Some(value.clone());
             }
         }
         Atom::PackageSummary(value) => {
@@ -461,7 +461,7 @@ fn process_atom_for_files(
         }
         Atom::LicenseConcluded(value) => {
             if let Some(file) = &mut file_in_progress {
-                file.concluded_license = SpdxExpression::parse(value).unwrap();
+                file.concluded_license = Some(SpdxExpression::parse(value).unwrap());
             }
         }
         Atom::LicenseInfoInFile(value) => {
@@ -477,7 +477,7 @@ fn process_atom_for_files(
         }
         Atom::FileCopyrightText(value) => {
             if let Some(file) = &mut file_in_progress {
-                file.copyright_text = value.clone();
+                file.copyright_text = Some(value.clone());
             }
         }
         Atom::FileNotice(value) => {
@@ -533,7 +533,7 @@ fn process_atom_for_snippets(
         }
         Atom::SnippetLicenseConcluded(value) => {
             if let Some(snippet) = &mut snippet_in_progress {
-                snippet.snippet_concluded_license = SpdxExpression::parse(value).unwrap();
+                snippet.snippet_concluded_license = Some(SpdxExpression::parse(value).unwrap());
             }
         }
         Atom::LicenseInfoInSnippet(value) => {
@@ -550,7 +550,7 @@ fn process_atom_for_snippets(
         }
         Atom::SnippetCopyrightText(value) => {
             if let Some(snippet) = &mut snippet_in_progress {
-                snippet.snippet_copyright_text = value.to_string();
+                snippet.snippet_copyright_text = Some(value.to_string());
             }
         }
         Atom::SnippetComment(value) => {
@@ -850,7 +850,7 @@ compatible system run time libraries."
             Some("uses glibc-2_11-branch from git://sourceware.org/git/glibc.git.".to_string())
         );
         assert_eq!(
-            glibc.concluded_license.identifiers(),
+            glibc.concluded_license.as_ref().unwrap().identifiers(),
             HashSet::from_iter(["LGPL-2.0-only".to_string(), "LicenseRef-3".to_string()])
         );
         assert_eq!(
@@ -858,11 +858,14 @@ compatible system run time libraries."
             vec!["GPL-2.0-only", "LicenseRef-2", "LicenseRef-1"]
         );
         assert_eq!(
-            glibc.declared_license.identifiers(),
+            glibc.declared_license.as_ref().unwrap().identifiers(),
             HashSet::from_iter(["LGPL-2.0-only".to_string(), "LicenseRef-3".to_string()])
         );
         assert_eq!(glibc.comments_on_license, Some("The license for this project changed with the release of version x.y.  The version of the project included here post-dates the license change.".to_string()));
-        assert_eq!(glibc.copyright_text, "Copyright 2008-2010 John Smith");
+        assert_eq!(
+            glibc.copyright_text.as_ref().unwrap().clone(),
+            "Copyright 2008-2010 John Smith"
+        );
         assert_eq!(
             glibc.package_summary_description,
             Some("GNU C library.".to_string())
@@ -925,7 +928,7 @@ This information was found in the COPYING.txt file in the xyz directory.".to_str
             ]
         );
         assert_eq!(
-            fooc.concluded_license.identifiers(),
+            fooc.concluded_license.as_ref().unwrap().identifiers(),
             HashSet::from_iter(["LGPL-2.0-only".to_string(), "LicenseRef-2".to_string(),])
         );
         assert_eq!(
@@ -937,7 +940,7 @@ This information was found in the COPYING.txt file in the xyz directory.".to_str
         );
         assert_eq!(fooc.comments_on_license, Some("The concluded license was taken from the package level that the file was included in.".to_string()));
         assert_eq!(
-            fooc.copyright_text,
+            fooc.copyright_text.as_ref().unwrap().clone(),
             "Copyright 2008-2010 John Smith".to_string()
         );
         assert_eq!(
@@ -997,13 +1000,13 @@ THE SOFTWARE IS PROVIDED �AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMP
             .iter()
             .any(|snip| snip.end_pointer == Pointer::new_line(None, 23)));
         assert_eq!(
-            snippet.snippet_concluded_license,
+            snippet.snippet_concluded_license.unwrap(),
             SpdxExpression::parse("GPL-2.0-only").unwrap()
         );
         assert_eq!(snippet.license_information_in_snippet, vec!["GPL-2.0-only"]);
         assert_eq!(snippet.snippet_comments_on_license, Some("The concluded license was taken from package xyz, from which the snippet was copied into the current file. The concluded license information was found in the COPYING.txt file in package xyz.".to_string()));
         assert_eq!(
-            snippet.snippet_copyright_text,
+            snippet.snippet_copyright_text.as_ref().unwrap().clone(),
             "Copyright 2008-2010 John Smith"
         );
         assert_eq!(snippet.snippet_comment, Some("This snippet was identified as significant and highlighted in this Apache-2.0 file, when a commercial scanner identified it as being derived from file foo.c in package xyz which is licensed under GPL-2.0.".to_string()));

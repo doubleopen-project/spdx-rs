@@ -20,8 +20,12 @@ pub struct Snippet {
     pub ranges: Vec<Range>,
 
     /// <https://spdx.github.io/spdx-spec/5-snippet-information/#55-snippet-concluded-license>
-    #[serde(rename = "licenseConcluded")]
-    pub snippet_concluded_license: SpdxExpression,
+    #[serde(
+        rename = "licenseConcluded",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub snippet_concluded_license: Option<SpdxExpression>,
 
     /// <https://spdx.github.io/spdx-spec/5-snippet-information/#56-license-information-in-snippet>
     #[serde(
@@ -40,8 +44,12 @@ pub struct Snippet {
     pub snippet_comments_on_license: Option<String>,
 
     /// <https://spdx.github.io/spdx-spec/5-snippet-information/#58-snippet-copyright-text>
-    #[serde(rename = "copyrightText")]
-    pub snippet_copyright_text: String,
+    #[serde(
+        rename = "copyrightText",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
+    pub snippet_copyright_text: Option<String>,
 
     /// <https://spdx.github.io/spdx-spec/5-snippet-information/#59-snippet-comment>
     #[serde(rename = "comment", skip_serializing_if = "Option::is_none", default)]
@@ -175,7 +183,11 @@ mod test {
         )
         .unwrap();
         assert_eq!(
-            spdx.snippet_information[0].snippet_concluded_license,
+            spdx.snippet_information[0]
+                .snippet_concluded_license
+                .as_ref()
+                .unwrap()
+                .clone(),
             SpdxExpression::parse("GPL-2.0-only").unwrap()
         );
     }
@@ -208,7 +220,11 @@ mod test {
         )
         .unwrap();
         assert_eq!(
-            spdx.snippet_information[0].snippet_copyright_text,
+            spdx.snippet_information[0]
+                .snippet_copyright_text
+                .as_ref()
+                .unwrap()
+                .clone(),
             "Copyright 2008-2010 John Smith".to_string()
         );
     }

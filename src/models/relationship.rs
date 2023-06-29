@@ -87,6 +87,8 @@ pub enum RelationshipType {
     Amends,
     PrerequisiteFor,
     HasPrerequisite,
+    RequirementDescriptionFor,
+    SpecificationFor,
     Other,
 }
 
