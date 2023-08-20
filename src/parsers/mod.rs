@@ -28,7 +28,7 @@
 use std::collections::HashSet;
 
 use chrono::{DateTime, Utc};
-use spdx_expression::{SimpleExpression, SpdxExpression};
+use spdx_expression::SpdxExpression;
 
 use crate::{
     error::SpdxError,
@@ -467,7 +467,7 @@ fn process_atom_for_files(
         Atom::LicenseInfoInFile(value) => {
             if let Some(file) = &mut file_in_progress {
                 file.license_information_in_file
-                    .push(SimpleExpression::parse(value).unwrap());
+                    .push(SpdxExpression::parse(value).unwrap());
             }
         }
         Atom::LicenseComments(value) => {
@@ -934,8 +934,8 @@ This information was found in the COPYING.txt file in the xyz directory.".to_str
         assert_eq!(
             fooc.license_information_in_file,
             vec![
-                SimpleExpression::parse("GPL-2.0-only").unwrap(),
-                SimpleExpression::parse("LicenseRef-2").unwrap()
+                SpdxExpression::parse("GPL-2.0-only").unwrap(),
+                SpdxExpression::parse("LicenseRef-2").unwrap()
             ]
         );
         assert_eq!(fooc.comments_on_license, Some("The concluded license was taken from the package level that the file was included in.".to_string()));
