@@ -637,7 +637,7 @@ fn process_annotation(
 fn process_atom_for_annotations(
     atom: &Atom,
     annotations: &mut Vec<Annotation>,
-    mut annotation_in_progress: &mut AnnotationInProgress,
+    annotation_in_progress: &mut AnnotationInProgress,
 ) -> Result<(), SpdxError> {
     process_annotation(annotation_in_progress, annotations);
 
