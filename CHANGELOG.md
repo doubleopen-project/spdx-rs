@@ -6,6 +6,13 @@ SPDX-License-Identifier: MIT
 
 # Changelog
 
+## [0.5.5](https://github.com/doubleopen-project/spdx-rs/compare/v0.5.4...v0.5.5) (2023-09-19)
+
+
+### Bug Fixes
+
+* follow enum literals from schema ([23d1519](https://github.com/doubleopen-project/spdx-rs/commit/23d1519b964062fe5fa72aed200c4a47ff5c6032))
+
 ## [0.5.4](https://github.com/doubleopen-project/spdx-rs/compare/v0.5.3...v0.5.4) (2023-09-01)
 
 
